@@ -1,0 +1,26 @@
+{
+  "name": "dsh-approval-gate",
+  "version": "0.1.0",
+  "description": "Gate «делай» for DeepSeek Harness: intercepts bash tool calls and blocks dangerous operations (rm -rf, kill, systemctl stop/restart, restart dsh-web, destructive DB statements, writes to .env/secrets) even when the sandbox mode would allow them, returning a denial that requires an explicit user 'делай'.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/schemastery": "^3.18.1"
+  }
+}
