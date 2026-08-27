@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+version=${1:?usage: ./deploy.sh <exact-version>}
+dsh plugin --profile web remove dsh-approval-gate
+dsh plugin --profile web add @goodandready-private/dsh-approval-gate@"$version"
+systemctl restart dsh-web
+systemctl is-active --quiet dsh-web
