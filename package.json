@@ -1,6 +1,6 @@
 {
   "name": "@goodandready-private/dsh-approval-gate",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Gate «делай» for DeepSeek Harness: intercepts bash tool calls and blocks dangerous operations (rm -rf, kill, systemctl stop/restart, restart dsh-web, destructive DB statements, writes to .env/secrets) even when the sandbox mode would allow them, returning a denial that requires an explicit user 'делай'.",
   "type": "module",
   "main": "lib/index.js",
