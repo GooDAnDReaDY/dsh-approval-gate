@@ -5,3 +5,7 @@ node_modules/
 *.key
 *.crt
 credentials.yaml
+openwiki/
+.planning/
+coverage/
+*.tgz
