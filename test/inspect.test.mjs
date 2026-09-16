@@ -1,0 +1,81 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import {
+  inspectBashCommand,
+  inspectExecution,
+  isProtectedPath,
+  tokenize,
+} from "../lib/inspect.js";
+
+function blocked(command) {
+  const hit = inspectBashCommand(command);
+  assert.equal(hit.deny, true, "expected block: " + command + " -> " + JSON.stringify(hit));
+}
+
+function passed(command) {
+  const hit = inspectBashCommand(command);
+  assert.equal(hit.deny, false, "expected pass: " + command + " -> " + JSON.stringify(hit));
+}
+
+test("tokenize concatenates quoted fragments and strips escapes", () => {
+  const tok = tokenize("k''ill -9 1");
+  assert.equal(tok.ok, true);
+  assert.deepEqual(tok.tokens.map((t) => t.value), ["kill", "-9", "1"]);
+  const escaped = tokenize("\kill 1");
+  assert.equal(escaped.ok, true);
+  assert.equal(escaped.tokens[0].value, "kill");
+});
+
+test("unparseable shell is fail-closed", () => {
+  blocked("echo $(rm -rf /)");
+  blocked("rm$IFS-rf /");
+  blocked("cat <<EOF");
+  blocked("echo `id`");
+});
+
+test("blocks recursive rm, kill, service control, sql, secret redirects", () => {
+  blocked("rm -rf /tmp/x");
+  blocked("rm -r /var/lib/x");
+  blocked("sudo rm -rf /");
+  blocked("kill -9 1234");
+  blocked("pkill node");
+  blocked("killall -u nginx");
+  blocked("k''ill -9 1");
+  blocked("systemctl restart dsh-web");
+  blocked("service dsh-web stop");
+  blocked('sqlite3 db.sqlite "DROP TABLE t"');
+  blocked("echo x > .env");
+  blocked("cat secret.txt | tee /tmp/api_key");
+  blocked("sed -i s/a/b/ credentials.yaml");
+  blocked("find . -delete");
+  blocked("git clean -fdx");
+  blocked('bash -c "rm -rf /tmp/x"');
+  blocked("env FOO=1 systemctl stop dsh-web");
+});
+
+test("passes safe commands and prose mentions", () => {
+  passed("systemctl is-active dsh-web");
+  passed("git log --oneline -5");
+  passed('grep -rn "kill-all" docs/');
+  passed("echo 'инструкция: не делать rm -rf'");
+  passed('python3 -c "print(\'rm -rf\')"');
+  passed("ls /tmp");
+  passed("");
+  passed("sed -n 1,10p README.md");
+});
+
+test("empty and missing bash command are documented allow", () => {
+  assert.equal(inspectExecution({ name: "bash", arguments: { command: "" } }).deny, false);
+  assert.equal(inspectExecution({ name: "bash", arguments: {} }).deny, false);
+  assert.equal(inspectExecution({ name: "bash", arguments: { command: 12 } }).deny, true);
+});
+
+test("file-write tools block protected paths and ignore ordinary files", () => {
+  assert.equal(isProtectedPath("/home/user/.env"), true);
+  assert.equal(isProtectedPath("credentials.yaml"), true);
+  assert.equal(isProtectedPath("README.md"), false);
+  assert.equal(inspectExecution({ name: "write", arguments: { path: ".env", contents: "x=1" } }).deny, true);
+  assert.equal(inspectExecution({ name: "edit", arguments: { file_path: "settings.yaml" } }).deny, true);
+  assert.equal(inspectExecution({ name: "write", arguments: { path: "lib/index.js" } }).deny, false);
+  assert.equal(inspectExecution({ name: "other", arguments: { command: "rm -rf /tmp/x" } }).deny, false);
+});

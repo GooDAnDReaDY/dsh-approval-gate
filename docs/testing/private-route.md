@@ -1,5 +1,16 @@
-# Private route verification
+# Test matrix
 
-The route check aligns the package name and Cordis patch with `@goodandready-private/dsh-approval-gate`. The host export remains the stable plugin id because this package has no browser client half.
+## Worktree
+- `npm install --no-package-lock --ignore-scripts`
+- `npm test`
+- Covers package identity, argv inspection, prose false positives, unparseable fail-closed, file-write secret paths.
 
-The tests cover private identity and the existing guard contract: dangerous commands return a denial, safe commands pass, and unrelated tool names are ignored. The isolated DSH profile additionally verifies install, health, host bundle loading, and cleanup while preserving lanmode.
+## Isolated DSH test profile
+- Install the exact `.tgz` from merged `main` with the profile helper.
+- Confirm the host bundle loads and `dsh-lanmode` remains installed.
+- Cleanup the candidate plugin and tarball.
+
+## Production candidate
+- Same tarball, not a worktree `file:` path.
+- Health of the web profile after install/restart.
+- One safe command still runs; one dangerous command still denies.
