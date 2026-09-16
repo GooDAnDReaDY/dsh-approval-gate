@@ -7,5 +7,6 @@ node_modules/
 credentials.yaml
 openwiki/
 .planning/
+.worktrees/
 coverage/
 *.tgz
