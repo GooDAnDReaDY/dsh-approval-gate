@@ -10,3 +10,9 @@ openwiki/
 .worktrees/
 coverage/
 *.tgz
+# Internal agent and workflow files
+AGENTS.md
+index.md
+deploy.sh
+docs/plans/
+.gitea/

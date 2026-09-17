@@ -43,7 +43,7 @@
 - 2026-09-16 - Host-only Russian denial string and approval token `делай` are intentional for this private plugin; no `locale.register`. Reason: the operator workflow is the Russian word `делай`, and there is no browser UI. Review if the plugin is ever published publicly or gains a client half.
 - 2026-09-16 - Denial text must not name a specific person; it says `от владельца`. Review if multi-operator wording is needed.
 - 2026-09-16 - Interpreter `-c`/`-e` payloads are not a full second language parser. Nested `bash -c` is inspected; `python3 -c "print('rm -rf')"` is allowed. Review if interpreter wrappers become a real bypass in production.
-- 2026-09-16 - `AGENTS.md`, `index.md`, `deploy.sh` stay tracked in Gitea (project contract). They stay out of the npm allowlist. `openwiki/` is gitignored. Review only if the Gitea file contract changes.
+- 2026-09-17 - `AGENTS.md`, `index.md`, `deploy.sh`, `docs/plans/` and `.gitea/` are untracked in Git and excluded via `.gitignore` to align with DEV standard (Refs: #10). The files remain on disk in DEV checkout for agent navigation and local deploy, but are not tracked in Git or published to npm/GitHub.
 
 ## Addendum: issue #16 candidate behavior
 
