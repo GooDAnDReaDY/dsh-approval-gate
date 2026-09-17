@@ -31,8 +31,9 @@ The operator then uses the existing approval word `делай`. This plugin does
 ```mermaid
 graph LR
   A[bash / file-write tool] --> B[dsh-approval-gate]
-  B -->|argv safe| C[tool runs]
-  B -->|dangerous or unparseable| D[denial string]
+  B -->|known safe| C[tool runs]
+  B -->|known dangerous| D[denial string]
+  B -->|uncertain syntax or target| E[DSH approval request]
 ```
 
 `lib/inspect.js` tokenizes the bash `command` (quotes, backslashes, pipelines, wrappers) and inspects the real argv. File-write tools are classified by path, not by regex over prose.
@@ -52,14 +53,14 @@ graph LR
 | `write`/`edit` to `.env`, `credentials.yaml`, `settings.yaml`, `cordis.patch.yml` | block |
 | `grep kill-all docs/`, `echo 'do not rm -rf'` | pass |
 | `python3 -c "print('rm -rf')"` | pass |
-| `$IFS`, `$(...)`, backticks, unclosed quotes, heredoc `<<` | block (unparseable) |
+| `$IFS`, `$(...)`, backticks, unclosed quotes, heredoc `<<` | request DSH approval |
 | `bash -c "rm -rf /tmp/x"` | block (nested shell) |
 | empty / missing `command` | pass (nothing to run) |
 | non-string `command` | block (unknown format) |
 
 ## What it does not guarantee
 
-- It is not a full bash parser. Unknown shell syntax is denied, not guessed.
+- It is not a full bash parser. Unknown or incomplete syntax requests approval; if approval is unavailable or approval=never is configured, DSH denies the call.
 - Interpreter `-c`/`-e` is not a second language parser. Nested `bash -c` is inspected.
 - Cron and systemd never pass through `tools.guard`.
 - A script file created earlier and then executed as `bash ./run.sh` is not opened and scanned.
@@ -87,9 +88,9 @@ Optional fields on the Cordis patch entry:
 
 MIT
 
-## Unreleased changes for issue #16
+## Changes in v0.1.3
 
-This section describes the current branch candidate. It supersedes the 0.1.2 parser and approval behavior above; the package version remains 0.1.2 until an approved release.
+This release adds bounded shell syntax analysis and routes uncertain cases through DSH approval while preserving denies for recognized destructive operations and protected-file writes.
 
 The shell analyzer now understands command substitutions, backticks, process substitutions, common redirects including 2> and &>, pipelines, and here-documents. It recursively checks nested shell commands and executable expansions. Ordinary safe reads can pass. Shell-expanded authorization headers request approval because curl receives the credential as a process argument. This package does not provide a credential-safe Gitea API helper; keep tokenized API calls out of command-line arguments.
 
