@@ -1,6 +1,6 @@
 {
   "name": "@goodandready-private/dsh-approval-gate",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Gate for DeepSeek Harness: intercepts bash tool calls and file writes, blocks dangerous operations, and requires the explicit owner approval word.",
   "type": "module",
   "main": "lib/index.js",

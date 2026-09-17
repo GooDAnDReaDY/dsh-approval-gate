@@ -1,13 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.1.3
 
-- Parse shell substitutions, backticks, redirects and here-documents; inspect nested commands.
-- Route uncertain syntax through the DSH approval request path while keeping known dangerous operations in the monotonic deny guard.
-- Add English and Chinese host messages with visible rule reasons and redacted excerpts.
-- Add deny coverage for downloaded shell pipelines, git reset --hard, mkfs and dd writes to devices.
-- Request DSH approval before sending shell-expanded authorization values to curl.
-- Keep the security hooks active when the optional locale service is unavailable.
+- Extend bounded shell analysis to command and process substitutions, backticks, common redirects and here-documents; inspect nested commands.
+- Allow ordinary safe reads and route uncertain syntax or execution targets through DSH approval with a visible rule reason and redacted excerpt.
+- Keep recognized destructive commands and protected-file writes denied, and request approval before shell-expanded Authorization values reach curl.
+- Keep security hooks active when the optional locale service is unavailable.
 
 
 ## 0.1.2
