@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.*
+*.pem
+*.key
+*.crt
+credentials.yaml
+openwiki/
+.planning/
+.worktrees/
+coverage/
+*.tgz

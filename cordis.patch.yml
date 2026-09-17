@@ -1,0 +1,6 @@
+# dsh-approval-gate bundle layer: applied automatically when the package is
+# installed as a profile bundle (package.json declares dsh.bundle.patch).
+- insert:
+    - id: dsh-approval-gate
+      name: '@goodandready/dsh-approval-gate'
+      config: {}
