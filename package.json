@@ -1,7 +1,7 @@
 {
-  "name": "@goodandready-private/dsh-approval-gate",
+  "name": "@goodandready/dsh-approval-gate",
   "version": "0.1.3",
-  "description": "Gate for DeepSeek Harness: intercepts bash tool calls and file writes, blocks dangerous operations, and requires the explicit owner approval word.",
+  "description": "Host-only command safety gate for DeepSeek Harness: blocks recognized dangerous operations and requests DSH approval when a command cannot be inspected.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -15,7 +15,8 @@
     "README.md",
     "README.zh.md",
     "README.ru.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "LICENSE"
   ],
   "dsh": {
     "bundle": {
@@ -29,16 +30,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/goodandready-private/dsh-approval-gate.git"
+    "url": "git+https://github.com/GooDAnDReaDY/dsh-approval-gate.git"
   },
-  "homepage": "https://github.com/goodandready-private/dsh-approval-gate#readme",
+  "homepage": "https://github.com/GooDAnDReaDY/dsh-approval-gate#readme",
   "bugs": {
-    "url": "https://github.com/goodandready-private/dsh-approval-gate/issues"
+    "url": "https://github.com/GooDAnDReaDY/dsh-approval-gate/issues"
   },
   "scripts": {
     "test": "node --test test/*.test.mjs"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   }
 }

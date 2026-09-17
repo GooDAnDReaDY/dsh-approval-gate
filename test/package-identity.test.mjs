@@ -7,12 +7,17 @@ import { apply, name as hostName } from "../lib/index.js";
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 
-test("private package identity matches the host patch", () => {
+test("public package identity matches the host patch", () => {
   const pkg = JSON.parse(read("package.json"));
-  assert.equal(pkg.name, "@goodandready-private/dsh-approval-gate");
-  assert.equal(pkg.publishConfig.registry, "https://npm.pkg.github.com");
+  assert.equal(pkg.name, "@goodandready/dsh-approval-gate");
+  assert.equal(pkg.publishConfig.registry, "https://registry.npmjs.org");
+  assert.equal(pkg.publishConfig.access, "public");
+  assert.ok(pkg.files.includes("LICENSE"));
+  assert.ok(pkg.files.includes("README.ru.md"));
+  assert.ok(pkg.files.includes("README.md"));
+  assert.ok(pkg.files.includes("README.zh.md"));
   assert.equal(hostName, "dsh-approval-gate");
-  assert.ok(read("cordis.patch.yml").includes("name: '@goodandready-private/dsh-approval-gate'"));
+  assert.ok(read("cordis.patch.yml").includes("name: '@goodandready/dsh-approval-gate'"));
 });
 
 test("guard blocks dangerous bash and passes safe unrelated calls", () => {

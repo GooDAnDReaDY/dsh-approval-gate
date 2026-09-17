@@ -6,7 +6,7 @@ This file complements the root DEV `AGENTS.md`. It records only facts specific t
 
 - Project: `dsh-approval-gate`
 - DEV: `/mnt/external/Project/DEV/dsh-approval-gate`
-- Package route: private `@goodandready-private/dsh-approval-gate` on GitHub Packages. Historical private identity is not renamed in ordinary tasks.
+- Public package route: @goodandready/dsh-approval-gate on npmjs. The earlier @goodandready-private/dsh-approval-gate identity is legacy-only and is not used for new installs.
 - Host-only DSH plugin. Cordis patch `id` is `dsh-approval-gate`. There is no client half.
 - OPT is not applicable; production installs the immutable package version into the DSH profile.
 - Design contract: `docs/design/DESIGN.md`

@@ -96,7 +96,7 @@ test("passes safe commands and prose mentions", () => {
   passed("systemctl is-active dsh-web");
   passed("git log --oneline -5");
   passed('grep -rn "kill-all" docs/');
-  passed("echo 'инструкция: не делать rm -rf'");
+  passed("echo 'instruction: do not run rm -rf'");
   passed('python3 -c "print(\'rm -rf\')"');
   passed("ls /tmp");
   passed("");

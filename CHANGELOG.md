@@ -2,6 +2,8 @@
 
 ## 0.1.3
 
+- First public npmjs release under the canonical @goodandready/dsh-approval-gate identity.
+
 - Extend bounded shell analysis to command and process substitutions, backticks, common redirects and here-documents; inspect nested commands.
 - Allow ordinary safe reads and route uncertain syntax or execution targets through DSH approval with a visible rule reason and redacted excerpt.
 - Keep recognized destructive commands and protected-file writes denied, and request approval before shell-expanded Authorization values reach curl.
@@ -18,4 +20,4 @@
 
 ## 0.1.1
 
-- Private GitHub Packages identity `@goodandready-private/dsh-approval-gate`.
+- Initial distribution used an internal package route before the public npmjs identity introduced in 0.1.3.
