@@ -54,3 +54,13 @@ This addendum records the unreleased candidate behavior; the original 0.1.2 desi
 - Host messages use English and Chinese dictionaries, identify the rule, and redact excerpts. Russian documentation is maintained here; runtime Russian strings remain the responsibility of dsh-russian-lang.
 - The bounded analyzer handles substitutions, redirects, pipelines, here-documents and nested expansions. It does not read script files and is not a complete Bash parser.
 - Broad allowedRoots/readOnlyBypass configuration and a Gitea token helper remain outside issue #16. The locale service is optional and is read through Cordis ctx.get; missing localization must not prevent the security hooks from loading. Shell-expanded Authorization headers are routed to approval because they expose the value in curl argv.
+
+## Public package migration addendum (0.1.3)
+
+The historical private-package statements and initial Russian operator-word proposal above describe the pre-migration design and are superseded for new installs by this addendum.
+
+- The public package identity is @goodandready/dsh-approval-gate on npmjs.
+- Commands with uncertain syntax or targets are passed to DSH native approval. The plugin does not implement an approval word.
+- Runtime messages are English and Simplified Chinese; Russian UI text is supplied by dsh-russian-lang.
+- Existing destructive-operation and protected-write denies remain deny-only.
+- Current supported parsing limits and user-facing behavior are documented in the three localized README files.

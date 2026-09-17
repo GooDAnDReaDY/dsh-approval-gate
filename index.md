@@ -1,6 +1,6 @@
 # dsh-approval-gate
 
-Host-only DeepSeek Harness safety guard. Intercepts dangerous bash argv, unparseable shell, and secret-file writes. Published privately as `@goodandready-private/dsh-approval-gate`.
+Host-only DeepSeek Harness safety guard. Intercepts dangerous bash argv, uncertain shell syntax, and protected-file writes. Public package: @goodandready/dsh-approval-gate on npmjs.
 
 - DEV: `/mnt/external/Project/DEV/dsh-approval-gate`
 - OPT: not applicable; production installs the immutable GitHub Packages version in the DSH profile.

@@ -15,3 +15,7 @@
 ## Production candidate
 - No production install, restart or profile edit is part of ordinary issue work.
 - A later approved deployment uses the exact immutable package version and records health/smoke results.
+
+## Public package acceptance addendum (0.1.3)
+
+For public releases, also verify the canonical npm identity and public registry metadata, all three localized READMEs in the tarball, the MIT license, and the explicit npm file allowlist. Scan the package archive and sanitized GitHub tree for internal paths, credentials, private infrastructure, and internal-only documents. Test the exact candidate in the isolated MiniPC profile, clean up the candidate, then deploy only the exact published registry version to production.

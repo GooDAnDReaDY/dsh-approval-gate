@@ -2,5 +2,5 @@
 # installed as a profile bundle (package.json declares dsh.bundle.patch).
 - insert:
     - id: dsh-approval-gate
-      name: '@goodandready-private/dsh-approval-gate'
+      name: '@goodandready/dsh-approval-gate'
       config: {}
