@@ -44,3 +44,13 @@
 - 2026-09-16 - Denial text must not name a specific person; it says `от владельца`. Review if multi-operator wording is needed.
 - 2026-09-16 - Interpreter `-c`/`-e` payloads are not a full second language parser. Nested `bash -c` is inspected; `python3 -c "print('rm -rf')"` is allowed. Review if interpreter wrappers become a real bypass in production.
 - 2026-09-16 - `AGENTS.md`, `index.md`, `deploy.sh` stay tracked in Gitea (project contract). They stay out of the npm allowlist. `openwiki/` is gitignored. Review only if the Gitea file contract changes.
+
+## Addendum: issue #16 candidate behavior
+
+This addendum records the unreleased candidate behavior; the original 0.1.2 design history above is preserved.
+
+- DSH owns approval prompts. The tools/pre-execute hook asks when shell syntax or a write target cannot be verified; approval=never remains fail-closed.
+- tools.guard stays deny-only and blocks recognized dangerous operations. Parse errors are checked for known dangerous command patterns, and other unsupported syntax requests approval.
+- Host messages use English and Chinese dictionaries, identify the rule, and redact excerpts. Russian documentation is maintained here; runtime Russian strings remain the responsibility of dsh-russian-lang.
+- The bounded analyzer handles substitutions, redirects, pipelines, here-documents and nested expansions. It does not read script files and is not a complete Bash parser.
+- Broad allowedRoots/readOnlyBypass configuration and a Gitea token helper remain outside issue #16. The locale service is optional and is read through Cordis ctx.get; missing localization must not prevent the security hooks from loading. Shell-expanded Authorization headers are routed to approval because they expose the value in curl argv.
