@@ -86,3 +86,15 @@ Optional fields on the Cordis patch entry:
 ## License
 
 MIT
+
+## Unreleased changes for issue #16
+
+This section describes the current branch candidate. It supersedes the 0.1.2 parser and approval behavior above; the package version remains 0.1.2 until an approved release.
+
+The shell analyzer now understands command substitutions, backticks, process substitutions, common redirects including 2> and &>, pipelines, and here-documents. It recursively checks nested shell commands and executable expansions. Ordinary safe reads can pass. Shell-expanded authorization headers request approval because curl receives the credential as a process argument. This package does not provide a credential-safe Gitea API helper; keep tokenized API calls out of command-line arguments.
+
+The locale service is optional; the security hooks remain active with English fallback messages when it is unavailable.
+
+Recognized destructive commands and writes to protected files remain denied. This includes recursive rm, process signals, service stop/restart operations, destructive SQL, protected-file writes, git reset --hard, forced git clean, mkfs, device-targeted dd, and downloaded content piped to a shell.
+
+Unsupported or incomplete syntax, dynamic command names or redirect targets, and script files whose contents cannot be inspected request approval through DSH. If approval is unavailable or approval=never is configured, DSH rejects the request. The plugin does not read script files or implement a separate approval word. Messages identify the rule and include a redacted excerpt. This is a bounded shell analyzer, not a complete Bash grammar.

@@ -1,16 +1,17 @@
 # Test matrix
 
 ## Worktree
-- `npm install --no-package-lock --ignore-scripts`
-- `npm test`
-- Covers package identity, argv inspection, prose false positives, unparseable fail-closed, file-write secret paths.
+- Run `npm install --no-package-lock --ignore-scripts` and `npm test`.
+- Cover parser classification (deny / ask / pass), nested substitutions, here-doc expansion, redirects, protected writes and non-string tool input.
+- Verify protected-file reads are distinguished from writes and shell-expanded Authorization headers request approval.
+- Confirm the monotonic guard only denies recognized dangerous actions; uncertain syntax uses `tools/pre-execute` ask.
+- Run `npm pack --dry-run --json` and verify the explicit package allowlist and per-file size cap.
 
 ## Isolated DSH test profile
-- Install the exact `.tgz` from merged `main` with the profile helper.
-- Confirm the host bundle loads and `dsh-lanmode` remains installed.
-- Cleanup the candidate plugin and tarball.
+- Build the exact candidate tarball from the issue worktree and install it temporarily in the isolated MiniPC profile.
+- Confirm the host bundle loads, ask and deny behavior work, and `dsh-lanmode` remains installed.
+- Remove only the candidate plugin and tarball created for this test.
 
 ## Production candidate
-- Same tarball, not a worktree `file:` path.
-- Health of the web profile after install/restart.
-- One safe command still runs; one dangerous command still denies.
+- No production install, restart or profile edit is part of ordinary issue work.
+- A later approved deployment uses the exact immutable package version and records health/smoke results.

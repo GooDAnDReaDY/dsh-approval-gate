@@ -20,11 +20,11 @@ test("guard blocks dangerous bash and passes safe unrelated calls", () => {
   const ctx = { tools: { guard(callback) { guard = callback; return callback; } } };
   apply(ctx);
   assert.equal(typeof guard, "function");
-  assert.match(guard({ name: "bash", arguments: { command: "systemctl restart dsh-web" } }), /Команда заблокирована/);
+  assert.match(guard({ name: "bash", arguments: { command: "systemctl restart dsh-web" } }), /Blocked by dsh-approval-gate rule/);
   assert.equal(guard({ name: "bash", arguments: { command: "systemctl is-active dsh-web" } }), undefined);
   assert.equal(guard({ name: "bash", arguments: { command: "grep kill-all docs/" } }), undefined);
   assert.equal(guard({ name: "other", arguments: { command: "rm -rf /tmp/x" } }), undefined);
-  assert.match(guard({ name: "write", arguments: { path: ".env", contents: "x=1" } }), /Команда заблокирована/);
+  assert.match(guard({ name: "write", arguments: { path: ".env", contents: "x=1" } }), /Blocked by dsh-approval-gate rule/);
 });
 
 test("tracked package files contain no concrete infrastructure paths", () => {
