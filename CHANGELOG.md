@@ -1,3 +1,17 @@
+## 0.1.4
+
+- The gate no longer raises an ask it knows cannot be answered. It reads the effective
+  approval policy (`ctx.approval.config.policy`) and, when that policy is in
+  `unattendedPolicies` (default `["never"]`, i.e. the full-access preset), an allowed command
+  proceeds instead of dying as a rejection nobody could consent to. On 20.09.2026 exactly that
+  turned every agreed write in such a session into `the user rejected tool`.
+- Denials never depend on the policy: dangerous shell commands and writes to secret files are
+  still blocked unconditionally, and the uncertain-syntax case stays denied where no
+  pre-execute hook exists.
+- New settings: `unattendedPolicies` and an explicit `unattended` flag for deployments where
+  the policy is not visible. An unknown policy keeps the safe direction and still asks.
+- 8 tests for the new behaviour (23 in total).
+
 # Changelog
 
 ## 0.1.3
