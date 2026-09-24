@@ -89,6 +89,9 @@ test("blocks recursive rm, kill, service control, sql, secret redirects", () => 
   blocked("systemctl restart dsh-web");
   blocked("service dsh-web stop");
   blocked('sqlite3 db.sqlite "DROP TABLE t"');
+  blocked('mysql -u root << EOF\nDROP TABLE users;\nEOF');
+  blocked('sqlite3 db.sqlite << EOF\nDROP TABLE t;\nEOF');
+  blocked('echo "DROP TABLE users;" | mysql -u root');
   blocked("echo x > .env");
   blocked("chmod 777 .env");
   blocked("chown root .env");
