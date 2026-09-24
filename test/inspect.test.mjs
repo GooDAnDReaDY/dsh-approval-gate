@@ -75,6 +75,9 @@ test("keeps additional hard-deny rules intact", () => {
 test("blocks recursive rm, kill, service control, sql, secret redirects", () => {
   blocked("rm -rf /tmp/x");
   blocked("rm -r /var/lib/x");
+  blocked("rm -Rf /tmp/x");
+  blocked("rm -R /tmp/x");
+  blocked("rm -fR /tmp/x");
   blocked("sudo rm -rf /");
   blocked("kill -9 1234");
   blocked("pkill node");
