@@ -102,6 +102,8 @@ test("blocks recursive rm, kill, service control, sql, secret redirects", () => 
   blocked("chmod -R 777 /");
   blocked("cat secret.txt | tee /tmp/api_key");
   blocked("sed -i s/a/b/ credentials.yaml");
+  blocked("sed --in-place s/a/b/ credentials.yaml");
+  blocked("sed --in-place=.bak s/a/b/ credentials.yaml");
   blocked("find . -delete");
   blocked("git clean -fdx");
   blocked('bash -c "rm -rf /tmp/x"');
