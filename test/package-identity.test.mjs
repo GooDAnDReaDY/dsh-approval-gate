@@ -41,9 +41,7 @@ test("tracked package files contain no concrete infrastructure paths", () => {
     "lib/inspect.js",
     "lib/messages.js",
     "lib/tokenizer.js",
-    ...fs.readdirSync(path.join(root, "docs"), { recursive: true })
-      .filter((file) => String(file).endsWith(".md"))
-      .map((file) => path.join("docs", file)),
+    ...(fs.existsSync(path.join(root, "docs")) ? fs.readdirSync(path.join(root, "docs"), { recursive: true }).filter((file) => String(file).endsWith(".md")).map((file) => path.join("docs", file)) : []),
   ];
   const markers = ["/" + "home/", "/" + "mnt/", "192." + "168.", "f" + "ile:/"];
   for (const file of files) {

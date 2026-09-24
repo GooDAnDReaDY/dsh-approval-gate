@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.6
+
+- Security: автоматическое раскрытие домашних путей `expandHome` (`~`, `$HOME`, `${HOME}`, `%USERPROFILE%`) в путях файлов, аргументах инструментов записи и перенаправлениях shell (Refs: #114).
+- Security: синтаксический разбор составных цепочек shell-команд `splitSubcommands` по операторам `&&`, `||`, `;`, `|`, `&` с сохранением кавычек и подстановок (Refs: #113).
+- Security: автоматический предохранитель сессии `CircuitBreaker` (блокировка зацикливания агента при 3 подряд или 20 общих отказах с принудительным запросом человека) (Refs: #110).
+- Engine: двухполосная предварительная фильтрация `BandsEngine`: Band 0 (Hard Deny regex) для мгновенной блокировки деструктивных команд и Band 1 (Safe Allow glob) для нулевой задержки на рутинных командах инспекции (Refs: #112).
+- Engine: 5-уровневый каскад принятия решений `SecurityEngine` (P0 Hard-Deny -> P1 Grants -> P2 Static Rules -> P3 LLM -> P4 Human Ask) с координацией предохранителя и правил (Refs: #122).
+
 ## 0.1.5
 
 - Security: block recursive `rm` with uppercase `-R` and `-Rf` flags in compliance with POSIX standard (Refs: #28).
