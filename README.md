@@ -58,8 +58,9 @@ graph LR
 | Module | Responsibility |
 |---|---|
 | lib/index.js | Registers the monotonic tools.guard and pre-execution approval hook; wires the shell and file-write inspectors into DSH. |
-| lib/inspect.js | Tokenizes bounded Bash syntax, inspects command argv and expansions, applies destructive-command and protected-write rules, and returns pass, deny, or ask decisions. |
-| lib/messages.js | Provides English and Simplified Chinese rule names, explanations, and redacted-result labels. |
+| lib/tokenizer.js | Tokenizes bounded Bash syntax, tracks operators/heredocs, and extracts parameter/command substitutions. |
+| lib/inspect.js | Evaluates safety rules, inspects command argv and expansions, and returns pass, deny, or ask decisions. |
+| lib/messages.js | Provides English, Simplified Chinese, and Russian rule names, explanations, and formatted messages. |
 | cordis.patch.yml | Declares the host-side plugin bundle and optional tool configuration. |
 
 The guard runs before the tool body. A recognized dangerous action is denied even if a prompt could otherwise be shown. Uncertain syntax or targets are sent to DSH approval; DSH policy still decides whether a prompt is available.
@@ -68,7 +69,12 @@ The guard runs before the tool body. A recognized dangerous action is denied eve
 
 | Call | Result |
 |---|---|
-| `rm -rf /tmp/x`, `sudo rm -r ...` | block |
+| `rm -rf /tmp/x`, `rm -Rf /tmp/x`, `sudo rm -r ...` | block |
+| `chmod`/`chown` on `.env` / `id_rsa`, `chmod -R 777 /` | block |
+| `source script.sh`, `. script.sh`, `source <(...)` | request DSH approval |
+| `mysql << EOF DROP TABLE...`, `echo DROP \| mysql` | block |
+| `curl ... \| python3`, `wget ... \| node` | block |
+| writing to `/etc/shadow`, `/etc/sudoers`, `authorized_keys` | block |
 | `kill` / `pkill` / `killall` as the command | block |
 | `k''ill -9 1` (quoted fragments) | block |
 | `systemctl restart\|stop\|disable ...` | block |

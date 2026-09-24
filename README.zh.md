@@ -38,7 +38,7 @@
 从公开 npm registry 安装：
 
 ```sh
-dsh plugin --profile web add @goodandready/dsh-approval-gate@0.1.3
+dsh plugin --profile web add @goodandready/dsh-approval-gate@0.1.5
 ```
 
 ## v0.1.3 变更
@@ -62,8 +62,9 @@ shell 分析器现在支持命令替换、反引号、进程替换、常见重�
 | 模块 | 职责 |
 |---|---|
 | lib/index.js | 注册单调的 tools.guard 和 DSH 原生预执行审批钩子，并连接 shell 与文件写入检查器。 |
-| lib/inspect.js | 对有界 shell 语法进行分词，检查 argv 和展开内容，应用危险命令与受保护写入规则，并返回通过、拒绝或请求审批的结果。 |
-| lib/messages.js | 提供英文和简体中文规则名称、说明及脱敏提示。 |
+| lib/tokenizer.js | 对有界 shell 语法进行分词，提取操作符、here-document 和命令/参数替换。 |
+| lib/inspect.js | 检查 argv 和展开内容，应用危险命令与受保护写入规则，并返回通过、拒绝或请求审批的结果。 |
+| lib/messages.js | 提供英文、简体中文及俄文规则名称、说明及格式化提示。 |
 | cordis.patch.yml | 声明 host 端插件包和可选工具配置。 |
 
 ```mermaid
@@ -116,7 +117,7 @@ graph LR
 
 ### 安装与限制
 
-<pre><code>dsh plugin --profile web add @goodandready/dsh-approval-gate@0.1.3</code></pre>
+<pre><code>dsh plugin --profile web add @goodandready/dsh-approval-gate@0.1.5</code></pre>
 
 本插件不添加 HTTP 路由或独立 CLI，也不读取脚本文件内容。它不是操作系统沙箱，不会检查 cron 或 systemd 自行执行的命令。
 

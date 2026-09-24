@@ -38,7 +38,7 @@
 Установка (публичный пакет npm):
 
 ```sh
-dsh plugin --profile web add @goodandready/dsh-approval-gate@0.1.3
+dsh plugin --profile web add @goodandready/dsh-approval-gate@0.1.5
 ```
 
 ## Изменения в v0.1.3
@@ -62,8 +62,9 @@ dsh plugin --profile web add @goodandready/dsh-approval-gate@0.1.3
 | Модуль | Назначение |
 |---|---|
 | lib/index.js | Регистрирует монотонный tools.guard и штатный pre-execution approval hook DSH, подключает проверки shell и файловых записей. |
-| lib/inspect.js | Разбирает ограниченный shell-синтаксис, проверяет argv и подстановки, применяет правила опасных команд и защищённых записей, возвращает pass, deny или ask. |
-| lib/messages.js | Содержит английские и китайские названия правил, пояснения и подписи для обезличенного фрагмента. |
+| lib/tokenizer.js | Разбирает ограниченный shell-синтаксис, выделяет операторы, heredoc и подстановки команд/параметров. |
+| lib/inspect.js | Применяет правила опасных команд и защищённых записей, проверяет argv и подстановки, возвращает pass, deny или ask. |
+| lib/messages.js | Содержит английские, китайские и русские словари правил, пояснений и форматирования сообщений. |
 | cordis.patch.yml | Объявляет host-пакет плагина и необязательную конфигурацию инструментов. |
 
 ```mermaid
@@ -80,7 +81,12 @@ graph LR
 
 | Пример вызова | Результат |
 |---|---|
-| rm -rf /tmp/x, sudo rm -r ... | Запрет |
+| rm -rf /tmp/x, rm -Rf /tmp/x, sudo rm -r ... | Запрет |
+| chmod/chown на секретах (.env, id_rsa) или chmod -R на корне | Запрет |
+| source script.sh, . script.sh, source <(...) | Запрос подтверждения DSH |
+| mysql << EOF DROP TABLE..., echo DROP \| mysql | Запрет |
+| curl ... \| python3, wget ... \| node | Запрет |
+| Запись в /etc/shadow, /etc/sudoers, authorized_keys | Запрет |
 | kill, pkill, killall | Запрет |
 | systemctl stop/restart/disable | Запрет; systemctl is-active проходит |
 | service name stop/restart | Запрет |
@@ -116,7 +122,7 @@ graph LR
 
 ### Установка и ограничения
 
-<pre><code>dsh plugin --profile web add @goodandready/dsh-approval-gate@0.1.3</code></pre>
+<pre><code>dsh plugin --profile web add @goodandready/dsh-approval-gate@0.1.5</code></pre>
 
 Плагин не добавляет HTTP-маршруты или отдельную CLI-команду и не читает содержимое файлов скриптов. Это не системная песочница: команды cron и systemd, запущенные отдельно от инструментов DSH, он не перехватывает.
 
