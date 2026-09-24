@@ -87,6 +87,10 @@ test("blocks recursive rm, kill, service control, sql, secret redirects", () => 
   blocked("service dsh-web stop");
   blocked('sqlite3 db.sqlite "DROP TABLE t"');
   blocked("echo x > .env");
+  blocked("chmod 777 .env");
+  blocked("chown root .env");
+  blocked("chmod 600 id_rsa");
+  blocked("chmod -R 777 /");
   blocked("cat secret.txt | tee /tmp/api_key");
   blocked("sed -i s/a/b/ credentials.yaml");
   blocked("find . -delete");
