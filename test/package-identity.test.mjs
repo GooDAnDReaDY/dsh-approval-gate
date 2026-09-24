@@ -39,6 +39,8 @@ test("tracked package files contain no concrete infrastructure paths", () => {
     "cordis.patch.yml",
     "lib/index.js",
     "lib/inspect.js",
+    "lib/messages.js",
+    "lib/tokenizer.js",
     ...fs.readdirSync(path.join(root, "docs"), { recursive: true })
       .filter((file) => String(file).endsWith(".md"))
       .map((file) => path.join("docs", file)),
