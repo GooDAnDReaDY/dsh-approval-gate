@@ -93,6 +93,9 @@ test("blocks recursive rm, kill, service control, sql, secret redirects", () => 
   blocked('sqlite3 db.sqlite << EOF\nDROP TABLE t;\nEOF');
   blocked('echo "DROP TABLE users;" | mysql -u root');
   blocked("echo x > .env");
+  blocked("echo x > /etc/shadow");
+  blocked("echo x > /etc/sudoers");
+  blocked("cat key.pub >> ~/.ssh/authorized_keys");
   blocked("chmod 777 .env");
   blocked("chown root .env");
   blocked("chmod 600 id_rsa");
@@ -130,6 +133,12 @@ test("file-write tools block protected paths and ignore ordinary files", () => {
   assert.equal(isProtectedPath("credentials.yaml"), true);
   assert.equal(isProtectedPath("README.md"), false);
   assert.equal(inspectExecution({ name: "write", arguments: { path: ".env", contents: "x=1" } }).deny, true);
+  assert.equal(isProtectedPath("/etc/shadow"), true);
+  assert.equal(isProtectedPath("/etc/sudoers"), true);
+  assert.equal(isProtectedPath("/etc/sudoers.d/custom"), true);
+  assert.equal(isProtectedPath("~/.ssh/authorized_keys"), true);
+  assert.equal(inspectExecution({ name: "write", arguments: { path: "/etc/shadow", contents: "x" } }).deny, true);
+  assert.equal(inspectExecution({ name: "write", arguments: { path: "/etc/sudoers", contents: "x" } }).deny, true);
   assert.equal(inspectExecution({ name: "edit", arguments: { file_path: "settings.yaml" } }).deny, true);
   assert.equal(inspectExecution({ name: "write", arguments: { path: "lib/index.js" } }).deny, false);
   assert.equal(inspectExecution({ name: "other", arguments: { command: "rm -rf /tmp/x" } }).deny, false);
