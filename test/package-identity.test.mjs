@@ -20,6 +20,29 @@ test("public package identity matches the host patch", () => {
   assert.ok(read("cordis.patch.yml").includes("name: '@goodandready/dsh-approval-gate'"));
 });
 
+test("all runtime library files exist, are included in package files, and contain no drift", () => {
+  const pkg = JSON.parse(read("package.json"));
+  assert.ok(pkg.files.includes("lib"));
+  const libFiles = fs.readdirSync(path.join(root, "lib")).filter((f) => f.endsWith(".js"));
+  assert.ok(libFiles.includes("index.js"));
+  assert.ok(libFiles.includes("inspect.js"));
+  assert.ok(libFiles.includes("messages.js"));
+  assert.ok(libFiles.includes("paths.js"));
+  assert.ok(libFiles.includes("bands.js"));
+  assert.ok(libFiles.includes("breaker.js"));
+  assert.ok(libFiles.includes("canonical.js"));
+  assert.ok(libFiles.includes("engine.js"));
+  assert.ok(libFiles.includes("grants.js"));
+  assert.ok(libFiles.includes("tokenizer.js"));
+  assert.ok(libFiles.includes("inspect-env.js"));
+  assert.ok(libFiles.includes("redact.js"));
+
+  for (const f of libFiles) {
+    const lines = read(path.join("lib", f)).split("\n").length;
+    assert.ok(lines <= 600, `lib/${f} has ${lines} lines, exceeding 600 limit`);
+  }
+});
+
 test("guard blocks dangerous bash and passes safe unrelated calls", () => {
   let guard;
   const ctx = { tools: { guard(callback) { guard = callback; return callback; } } };
@@ -33,14 +56,14 @@ test("guard blocks dangerous bash and passes safe unrelated calls", () => {
 });
 
 test("tracked package files contain no concrete infrastructure paths", () => {
+  const libFiles = fs.readdirSync(path.join(root, "lib")).filter((f) => f.endsWith(".js")).map((f) => path.join("lib", f));
   const files = [
     "README.md",
+    "README.ru.md",
+    "README.zh.md",
     "package.json",
     "cordis.patch.yml",
-    "lib/index.js",
-    "lib/inspect.js",
-    "lib/messages.js",
-    "lib/tokenizer.js",
+    ...libFiles,
     ...(fs.existsSync(path.join(root, "docs")) ? fs.readdirSync(path.join(root, "docs"), { recursive: true }).filter((file) => String(file).endsWith(".md")).map((file) => path.join("docs", file)) : []),
   ];
   const markers = ["/" + "home/", "/" + "mnt/", "192." + "168.", "f" + "ile:/"];
