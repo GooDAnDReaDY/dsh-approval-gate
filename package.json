@@ -1,6 +1,6 @@
 {
   "name": "@goodandready/dsh-approval-gate",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Host-only command safety gate for DeepSeek Harness: blocks recognized dangerous operations and requests DSH approval when a command cannot be inspected.",
   "type": "module",
   "main": "lib/index.js",

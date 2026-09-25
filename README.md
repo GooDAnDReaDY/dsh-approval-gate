@@ -57,10 +57,18 @@ graph LR
 
 | Module | Responsibility |
 |---|---|
-| lib/index.js | Registers the monotonic tools.guard and pre-execution approval hook; wires the shell and file-write inspectors into DSH. |
+| lib/index.js | Registers the monotonic tools.guard and pre-execution approval hook; wires SecurityEngine into DSH. |
+| lib/engine.js | Coordinates the 5-tier decision cascade (P0 Hard-Deny, P1 Grants, P2 Static, P3 LLM, P4 Ask). |
+| lib/bands.js | Fast two-band prefilter for critical hard-denials (Band 0) and zero-overhead safe inspections (Band 1). |
+| lib/breaker.js | Session circuit breaker protecting against infinite agent retry loops upon security denials. |
+| lib/grants.js | Temporary scoped session grant store with TTL and usage limits. |
+| lib/canonical.js | Canonical serialization and hashing of tool execution calls. |
+| lib/paths.js | Path normalization, home expansion, and symlink/traversal boundary verification via resolveSafePath. |
 | lib/tokenizer.js | Tokenizes bounded Bash syntax, tracks operators/heredocs, and extracts parameter/command substitutions. |
 | lib/inspect.js | Evaluates safety rules, inspects command argv and expansions, and returns pass, deny, or ask decisions. |
-| lib/messages.js | Provides English, Simplified Chinese, and Russian rule names, explanations, and formatted messages. |
+| lib/inspect-env.js | Inspects and prevents environment exfiltration, procfs reads, and secret dumping. |
+| lib/redact.js | Masks sensitive credentials, authorization headers, and query tokens in audit messages and URLs. |
+| lib/messages.js | Provides English, Simplified Chinese, and Russian rule names, contextual hints, and formatted messages. |
 | cordis.patch.yml | Declares the host-side plugin bundle and optional tool configuration. |
 
 The guard runs before the tool body. A recognized dangerous action is denied even if a prompt could otherwise be shown. Uncertain syntax or targets are sent to DSH approval; DSH policy still decides whether a prompt is available.
