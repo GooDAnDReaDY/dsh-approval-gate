@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { canonicalizeFsPath, isPathTraversal, resolveSafePath } from "../lib/paths.js";
+import { inspectExecution } from "../lib/inspect.js";
 
 test("canonicalizeFsPath resolves . and .. segments cleanly", () => {
   assert.equal(canonicalizeFsPath("/var/log/../lib/./app"), "/var/lib/app");
@@ -31,3 +35,42 @@ test("resolveSafePath returns structured safety object", () => {
   assert.equal(unsafe.reason, "path-traversal-escape");
 });
 
+test("resolveSafePath detects real symlink traversal escape on filesystem", (t) => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "gate-symlink-test-"));
+  const workspaceDir = path.join(tmpDir, "workspace");
+  const outsideDir = path.join(tmpDir, "outside");
+  fs.mkdirSync(workspaceDir);
+  fs.mkdirSync(outsideDir);
+  const secretFile = path.join(outsideDir, "secret.key");
+  fs.writeFileSync(secretFile, "PRIVATE_DATA");
+
+  const symlinkPath = path.join(workspaceDir, "link-to-secret");
+  try {
+    fs.symlinkSync(secretFile, symlinkPath);
+    const result = resolveSafePath(symlinkPath, workspaceDir);
+    assert.equal(result.safe, false);
+    assert.equal(result.reason, "symlink-traversal-escape");
+  } catch (err) {
+    // If filesystem does not support symlinks in unprivileged mode
+    t.skip("symlinks not supported in environment");
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+test("inspectExecution uses resolveSafePath to block path traversal write tools", () => {
+  const hit = inspectExecution(
+    { name: "write", arguments: { path: "../../outside/passwords.txt", contents: "leak" } },
+    { workspaceDir: "/home/app/project" }
+  );
+  assert.equal(hit.deny, true);
+  assert.equal(hit.reason, "path-traversal");
+});
+
+test("inspectExecution allows safe writes inside workspaceDir", () => {
+  const hit = inspectExecution(
+    { name: "write", arguments: { path: "src/utils/logger.js", contents: "export const log = 1;" } },
+    { workspaceDir: "/home/app/project" }
+  );
+  assert.equal(hit.deny, false);
+});

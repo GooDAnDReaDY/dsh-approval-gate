@@ -106,3 +106,29 @@ test("locale dictionaries cover English, Chinese, and Russian gate messages", ()
   const ruKeys = Object.keys(MESSAGES.ru).sort();
   assert.deepEqual(ruKeys, enKeys);
 });
+
+test("apply integrates SecurityEngine waterfall into tools.guard and preExecute", async () => {
+  let guard;
+  let preExecute;
+  const ctx = {
+    get: () => undefined,
+    effect: (fn) => fn(),
+    on: (evt, fn) => { preExecute = fn; },
+    tools: { guard: (fn) => { guard = fn; } },
+    logger: { warn: () => {} },
+  };
+
+  apply(ctx, {});
+  assert.equal(typeof guard, "function");
+  assert.equal(typeof preExecute, "function");
+
+  // P0 Hard Deny
+  assert.match(guard({ name: "bash", arguments: { command: "rm -rf /" } }), /Blocked by dsh-approval-gate rule/);
+
+  // P2 Safe allow
+  assert.equal(guard({ name: "bash", arguments: { command: "git status" } }), undefined);
+
+  // P4 Ask on uncertain syntax
+  const askRes = await preExecute({ name: "bash", arguments: { command: "echo $(grep value" } }, async () => ({ kind: "allow" }));
+  assert.equal(askRes.kind, "ask");
+});

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.9
+
+- Inspect: декомпозиция `lib/inspect.js` с выносом `checkEnvExfiltration` в `lib/inspect-env.js`, строгое соблюдение порога 600 строк (Refs: #35).
+- Security: автоматическое маскирование и redaction чувствительных данных, токенов и паролей в сетевых URL и аудиторских логах `redactUrl` и `redactCredentials` (Refs: #42).
+- Paths: интеграция `resolveSafePath` как основного примитива безопасности файловых путей и защита от symlink и path traversal обходов (Refs: #94, #137).
+- Engine: интеграция 5-уровневого каскада принятия решений `SecurityEngine` (P0 Hard-Deny -> P1 Grants -> P2 Static -> P3 LLM -> P4 Ask) в хук `tools/pre-execute` и рантайм-гард `tools.guard` (Refs: #122).
+- Messages: расширенная мультиязычная локализация причин блокировки (ru, en, zh) с контекстными подсказками безопасных альтернатив `hintPrefix` и `ruleHints` (Refs: #131).
+- Sync: автоматический тест контроля паритета рантайм-файлов и синхронизация метаданных публичных релизов (Refs: #138).
+
 ## 0.1.8
 
 - Paths: нормализация разделителей путей `normalizeSeparators` для кроссплатформенной обработки Windows (`\`) и POSIX (`/`) слешей (Refs: #109).
