@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.10
+
+- Policy: точное определение сессионной политики апрува в `readKnobs` через `approval.effectivePolicy(session)`, историю событий `session.eventAt` и пресет `danger-full-access` (Refs: #140).
+- Execution: корректный пропуск некритичных команд в режиме «Полный доступ» (`never`) без ложного поднятия `ask` и автоматического отказа DSH `Error: the user rejected tool` (Refs: #140).
+- Observability: форматирование `sessionTag` с получением строкового идентификатора сессии `session.id` / `session.name` вместо `[object Object]` (Refs: #140).
+
 ## 0.1.9
 
 - Inspect: декомпозиция `lib/inspect.js` с выносом `checkEnvExfiltration` в `lib/inspect-env.js`, строгое соблюдение порога 600 строк (Refs: #35).

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { apply, isUnattended, DEFAULT_UNATTENDED_POLICIES } from "../lib/index.js";
+import { apply, isUnattended, readKnobs, DEFAULT_UNATTENDED_POLICIES } from "../lib/index.js";
+import { sessionTag } from "../lib/messages.js";
 
 /** A context with the services the gate reads, plus captured hooks. */
 function contextWith({ policy = "", sandbox = "", locale = false } = {}) {
@@ -120,4 +121,105 @@ test("isUnattended is a pure decision over the policy list", () => {
   assert.equal(isUnattended({}), false);
   assert.equal(isUnattended({ policy: "auto-review", unattendedPolicies: ["auto-review"] }), true);
   assert.equal(isUnattended({ policy: "never", unattendedPolicies: [] }), false, "an empty list disables the shortcut");
+});
+
+
+test("readKnobs resolves session policy via approval.effectivePolicy(session)", () => {
+  const session = { id: "sess-123" };
+  const execution = { agent: { session } };
+  const ctx = {
+    get: (name) => {
+      if (name === "approval") {
+        return {
+          config: { policy: "ask" },
+          effectivePolicy: (s) => (s === session ? "never" : "ask"),
+        };
+      }
+      return undefined;
+    },
+  };
+  const knobs = readKnobs(ctx, execution);
+  assert.equal(knobs.policy, "never");
+  assert.equal(isUnattended(knobs), true);
+});
+
+test("readKnobs resolves session policy via session event history", () => {
+  const events = [
+    { type: "turn/start", data: { turn: 1 } },
+    { type: "permission/preset", data: { preset: "danger-full-access" } },
+    { type: "approval/policy", data: { policy: "never" } },
+  ];
+  const session = {
+    id: "sess-456",
+    seq: events.length,
+    eventAt: (seq) => events[seq],
+  };
+  const execution = { agent: { session } };
+  const ctx = {
+    get: (name) => {
+      if (name === "approval") return { config: { policy: "" } };
+      return undefined;
+    },
+  };
+  const knobs = readKnobs(ctx, execution);
+  assert.equal(knobs.policy, "never");
+  assert.equal(isUnattended(knobs), true);
+});
+
+test("readKnobs resolves danger-full-access preset from session event history", () => {
+  const events = [
+    { type: "turn/start", data: { turn: 1 } },
+    { type: "permission/preset", data: { preset: "danger-full-access" } },
+  ];
+  const session = {
+    id: "sess-789",
+    seq: events.length,
+    eventAt: (seq) => events[seq],
+  };
+  const execution = { agent: { session } };
+  const ctx = {
+    get: (name) => {
+      if (name === "approval") return { config: { policy: "" } };
+      return undefined;
+    },
+  };
+  const knobs = readKnobs(ctx, execution);
+  assert.equal(knobs.policy, "never");
+  assert.equal(isUnattended(knobs), true);
+});
+
+test("full-access session permits uncertain commands in pre-execute without raising ask", async () => {
+  const events = [
+    { type: "permission/preset", data: { preset: "danger-full-access" } },
+  ];
+  const session = {
+    id: "sess-full-access",
+    seq: events.length,
+    eventAt: (seq) => events[seq],
+  };
+  const execution = {
+    name: "bash",
+    arguments: { command: "mkdir -p /tmp/test && (echo 123 > /tmp/test/out.txt)" },
+    agent: { session },
+  };
+
+  const { ctx, captured } = contextWith({ policy: "" });
+  apply(ctx, {});
+
+  let nextCalled = false;
+  const res = await captured.preExecute(execution, async () => {
+    nextCalled = true;
+    return { kind: "allow" };
+  });
+
+  assert.equal(nextCalled, true, "command proceeded automatically under full-access preset");
+  assert.deepEqual(res, { kind: "allow" });
+});
+
+test("sessionTag formats session id cleanly without [object Object]", () => {
+  assert.equal(sessionTag({ agent: "agent-1" }), " (session agent-1)");
+  assert.equal(sessionTag({ agent: { session: { id: "sess-abc" } } }), " (session sess-abc)");
+  assert.equal(sessionTag({ agent: { session: { name: "sess-def" } } }), " (session sess-def)");
+  assert.equal(sessionTag({ agent: { session: "sess-str" } }), " (session sess-str)");
+  assert.equal(sessionTag({ agent: { session: {} } }), "");
 });
