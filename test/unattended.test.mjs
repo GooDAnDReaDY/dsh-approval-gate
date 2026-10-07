@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { apply, isUnattended, readKnobs, DEFAULT_UNATTENDED_POLICIES } from "../lib/index.js";
+import { apply, isUnattended, readKnobs, resolveSessionId, DEFAULT_UNATTENDED_POLICIES } from "../lib/index.js";
 import { sessionTag } from "../lib/messages.js";
 
 /** A context with the services the gate reads, plus captured hooks. */
@@ -247,4 +247,64 @@ test("tripped breaker in unattended mode is denied instead of allowed", async ()
   assert.equal(nextCalled, false, "tripped breaker must NOT bypass in unattended mode");
   assert.match(res, /Blocked by dsh-approval-gate rule/);
   assert.match(res, /Circuit breaker tripped/i);
+});
+
+
+test("danger-full-access preset overrides approval service returning ask (#160, #163)", () => {
+  const events = [
+    { type: "turn/start", data: { turn: 1 } },
+    { type: "permission/preset", data: { preset: "danger-full-access" } },
+  ];
+  const session = {
+    id: "sess-override",
+    seq: events.length,
+    eventAt: (seq) => events[seq],
+  };
+  const execution = { agent: { session } };
+  const ctx = {
+    get: (name) => {
+      if (name === "approval") {
+        return {
+          config: { policy: "ask" },
+          effectivePolicy: () => "ask", // host returns ask because no approval/policy was logged
+        };
+      }
+      return undefined;
+    },
+  };
+  const knobs = readKnobs(ctx, execution);
+  assert.equal(knobs.preset, "danger-full-access");
+  assert.equal(knobs.policy, "never");
+  assert.equal(isUnattended(knobs), true);
+});
+
+test("danger-full-access sandbox mode sets unattended true even if policy is ask", () => {
+  const knobs = { policy: "ask", sandbox: "danger-full-access" };
+  assert.equal(isUnattended(knobs), true);
+});
+
+test("resolveSessionId extracts clean string id from various agent/session shapes", () => {
+  assert.equal(resolveSessionId({ agent: { session: { id: "s-1" } } }), "s-1");
+  assert.equal(resolveSessionId({ agent: { session: "s-str" } }), "s-str");
+  assert.equal(resolveSessionId({ agent: { session: { sessionId: "s-sid" } } }), "s-sid");
+  assert.equal(resolveSessionId({ agent: { id: "a-1" } }), "a-1");
+  assert.equal(resolveSessionId({ agent: "a-str" }), "a-str");
+  assert.equal(resolveSessionId(null), "default");
+  assert.equal(resolveSessionId({}), "default");
+});
+
+test("apply uses ctx.provide when present without throwing Cordis provide error", () => {
+  let providedName = null;
+  let providedValue = null;
+  const mockCtx = {
+    provide: (name, val) => {
+      providedName = name;
+      providedValue = val;
+    },
+    tools: { guard: () => () => {} },
+  };
+  apply(mockCtx, {});
+  assert.equal(providedName, "approvalGate");
+  assert.ok(providedValue && typeof providedValue.addGrant === "function");
+  assert.ok(providedValue && typeof providedValue.resume === "function");
 });

@@ -127,3 +127,20 @@ test("SecurityEngine forwards addGrant, getGrants and resume", () => {
   engine.resume("test-sess");
   assert.equal(engine.breaker.isTripped("test-sess"), false);
 });
+
+
+test("SecurityEngine supports defaultVerdict 'ask' for fail-closed unclassified commands (#163)", () => {
+  const engine = new SecurityEngine({ defaultVerdict: "ask" });
+  const res = engine.decide({ name: "bash", arguments: { command: "custom-proprietary-binary --arg" } });
+  assert.equal(res.verdict, "ask");
+  assert.equal(res.stage, "P4");
+  assert.equal(res.reason, "unmatched-ask");
+});
+
+test("SecurityEngine defaultVerdict 'allow' permits unclassified commands by default", () => {
+  const engine = new SecurityEngine({ defaultVerdict: "allow" });
+  const res = engine.decide({ name: "bash", arguments: { command: "custom-proprietary-binary --arg" } });
+  assert.equal(res.verdict, "allow");
+  assert.equal(res.stage, "P2");
+  assert.equal(res.reason, "unmatched-allow");
+});

@@ -47,3 +47,18 @@ test("BandsEngine supports dynamic registration of read-only tools and allow-glo
   assert.equal(engine.evaluate("bash", "docker ps -a"), "allow");
 });
 
+
+
+test("BandsEngine derives read-only tools dynamically from host toolRegistry (#156)", () => {
+  const toolRegistry = {
+    getTools: () => [
+      { name: "inspect_schema", readOnly: true },
+      { name: "query_database", readonly: true },
+      { name: "delete_database", readOnly: false },
+    ],
+  };
+  const engine = new BandsEngine({ toolRegistry });
+  assert.equal(engine.isReadOnlyTool("inspect_schema"), true);
+  assert.equal(engine.isReadOnlyTool("query_database"), true);
+  assert.equal(engine.isReadOnlyTool("delete_database"), false);
+});
