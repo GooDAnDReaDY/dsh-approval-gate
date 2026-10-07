@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.12
+
+- Fix: корректная регистрация сервиса `approvalGate` в Cordis через `ctx.provide('approvalGate', ...)` и экспорт `export const provide = ['approvalGate']`, устраняющая ошибку `cannot set property "approvalGate" without provide` при старте хоста DSH.
+- Policy: надежное определение режима «Полный доступ» (`danger-full-access` / `never`) в `readKnobs` и `isUnattended` даже при отсутствии предварительного события `approval/policy` в сессии (приоритет пресета и sandbox режима над дефолтным `ask` от `ApprovalService`), предотвращающая ложный отказ `the user rejected tool` на всех командах агента.
+- Localization: удаление захардкоженного русского словаря из `lib/messages.js` в строгом соответствии со стандартом разработки DSH плагинов (только `en` и `zh`, русская локализация централизованно обслуживается `dsh-russian-lang`) с защитной обработкой `locale.register` в `apply` (Refs: #153, #162).
+- Bands: динамическое расширение списка read-only инструментов из хостового `toolRegistry` (`options.toolRegistry`) с поддержкой аннотаций `readOnly` / `readonly` (Refs: #156).
+- Engine: настраиваемый дефолтный вердикт для нераспознанных команд `defaultVerdict` (`allow` по умолчанию, опциональный fail-closed `ask`) с добавлением в схему `Config` (Refs: #163).
+- Session: гарантированное извлечение строкового `sessionId` в `resolveSessionId` для любых структур объекта `agent` / `session`.
+
 ## 0.1.11
 
 - Security: проверка абсолютных путей перенаправлений shell на выход за пределы рабочего каталога `workspaceDir` с исключением canonical устройств (`/dev/null`) и временных каталогов (`/tmp`) (Refs: #143).
