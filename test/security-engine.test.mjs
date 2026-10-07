@@ -86,3 +86,25 @@ test("SecurityEngine P4 stage asks on uncertain shell syntax", () => {
   assert.equal(res.stage, "P4");
   assert.equal(res.reason, "interpreter-payload");
 });
+
+test("SecurityEngine P3 classifier error fails closed to P4 Ask", () => {
+  const classifier = () => {
+    throw new Error("classifier internal failure");
+  };
+  const engine = new SecurityEngine({ classifier });
+  const res = engine.decide({ name: "bash", arguments: { command: "some-unmatched-command" } });
+  assert.equal(res.verdict, "ask");
+  assert.equal(res.stage, "P4");
+  assert.equal(res.reason, "classifier-error");
+});
+
+test("SecurityEngine decide catches internal parser or inspection errors and fails closed", () => {
+  const engine = new SecurityEngine();
+  engine.bands.evaluate = () => {
+    throw new Error("parser exploded");
+  };
+  const res = engine.decide({ name: "bash", arguments: { command: "ls" } });
+  assert.equal(res.verdict, "ask");
+  assert.equal(res.stage, "P4");
+  assert.equal(res.reason, "inspect-error");
+});

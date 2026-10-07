@@ -132,3 +132,33 @@ test("apply integrates SecurityEngine waterfall into tools.guard and preExecute"
   const askRes = await preExecute({ name: "bash", arguments: { command: "echo $(grep value" } }, async () => ({ kind: "allow" }));
   assert.equal(askRes.kind, "ask");
 });
+
+test("apply hooks catch throwing engine without crashing harness", async () => {
+  let guard;
+  let preExecute;
+  const ctx = {
+    get: () => undefined,
+    effect: (fn) => fn(),
+    on: (evt, fn) => { preExecute = fn; },
+    tools: { guard: (fn) => { guard = fn; } },
+    logger: { warn: () => {} },
+  };
+
+  const throwingEngine = {
+    decide() {
+      throw new Error("disaster in engine");
+    },
+  };
+
+  apply(ctx, { engine: throwingEngine });
+  assert.equal(typeof guard, "function");
+  assert.equal(typeof preExecute, "function");
+
+  const askRes = await preExecute({ name: "bash", arguments: { command: "ls" } }, async () => ({ kind: "allow" }));
+  assert.equal(askRes.kind, "ask");
+  assert.match(askRes.reason, /could not be fully inspected/);
+
+  const denial = guard({ name: "bash", arguments: { command: "ls" } });
+  assert.match(denial, /Blocked by dsh-approval-gate rule/);
+  assert.match(denial, /ruleUnknown|Blocked/);
+});
