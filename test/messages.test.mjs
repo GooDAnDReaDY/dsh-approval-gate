@@ -2,13 +2,12 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { MESSAGES, denyMessage, askMessage } from "../lib/messages.js";
 
-test("locale dictionaries cover all keys identically across EN, ZH, and RU", () => {
+test("locale dictionaries cover all keys identically across EN and ZH (Russian delegated to dsh-russian-lang)", () => {
   const enKeys = Object.keys(MESSAGES.en).sort();
   const zhKeys = Object.keys(MESSAGES.zh).sort();
-  const ruKeys = Object.keys(MESSAGES.ru).sort();
 
   assert.deepEqual(zhKeys, enKeys, "ZH keys must match EN keys");
-  assert.deepEqual(ruKeys, enKeys, "RU keys must match EN keys");
+  assert.equal(MESSAGES.ru, undefined, "RU dictionary must not be hardcoded in plugin (per DSH standard)");
   assert.ok(enKeys.includes("rulePathTraversal"));
   assert.ok(enKeys.includes("ruleEnvDumpLeak"));
   assert.ok(enKeys.includes("hintPathTraversal"));
@@ -21,7 +20,14 @@ test("denyMessage appends localized contextual hints when available", () => {
   assert.ok(msgEn.includes("Directory traversal attack detected"));
   assert.ok(msgEn.includes("Hint: Keep operations strictly within the project directory"));
 
-  const msgRu = denyMessage(hit, "", (k) => MESSAGES.ru[k] || k);
+  // External translation (e.g. delegated to dsh-russian-lang)
+  const mockRu = {
+    blockedPrefix: "Заблокировано правилом dsh-approval-gate",
+    rulePathTraversal: "Обнаружена попытка обхода каталогов",
+    hintPrefix: "Подсказка",
+    hintPathTraversal: "Ограничьте операции пределами рабочего каталога",
+  };
+  const msgRu = denyMessage(hit, "", (k) => mockRu[k] || k);
   assert.ok(msgRu.includes("Обнаружена попытка обхода каталогов"));
   assert.ok(msgRu.includes("Подсказка: Ограничьте операции пределами рабочего каталога"));
 
@@ -31,8 +37,14 @@ test("denyMessage appends localized contextual hints when available", () => {
 });
 
 test("denyMessage handles env dump leaks and session breaker hints", () => {
+  const mockRu = {
+    blockedPrefix: "Заблокировано правилом dsh-approval-gate",
+    ruleEnvDumpLeak: "Попытка утечки переменных окружения",
+    hintPrefix: "Подсказка",
+    hintEnvDumpLeak: "Запрашивайте конкретные несекретные переменные",
+  };
   const hitEnv = { deny: true, reason: "env-dump-leak", snippet: "env" };
-  const msgRu = denyMessage(hitEnv, "", (k) => MESSAGES.ru[k] || k);
+  const msgRu = denyMessage(hitEnv, "", (k) => mockRu[k] || k);
   assert.ok(msgRu.includes("Попытка утечки переменных окружения"));
   assert.ok(msgRu.includes("Запрашивайте конкретные несекретные переменные"));
 

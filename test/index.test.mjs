@@ -95,16 +95,17 @@ test("localization failures fall back to English and are logged", async () => {
   assert.ok(logs.every((line) => /localization lookup failed/.test(line)));
 });
 
-test("locale dictionaries cover English, Chinese, and Russian gate messages", () => {
-  for (const locale of ["en", "zh", "ru"]) {
+test("locale dictionaries cover English and Chinese gate messages (Russian delegated)", () => {
+  for (const locale of ["en", "zh"]) {
     assert.ok(MESSAGES[locale].blockedPrefix);
     assert.ok(MESSAGES[locale].approvalRequired);
     assert.ok(MESSAGES[locale].askUnparseable);
     assert.ok(MESSAGES[locale].ruleRecursiveRm);
   }
   const enKeys = Object.keys(MESSAGES.en).sort();
-  const ruKeys = Object.keys(MESSAGES.ru).sort();
-  assert.deepEqual(ruKeys, enKeys);
+  const zhKeys = Object.keys(MESSAGES.zh).sort();
+  assert.deepEqual(zhKeys, enKeys);
+  assert.equal(MESSAGES.ru, undefined);
 });
 
 test("apply integrates SecurityEngine waterfall into tools.guard and preExecute", async () => {
