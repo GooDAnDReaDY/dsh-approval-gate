@@ -145,3 +145,26 @@ test("file-write tools block protected paths and ignore ordinary files", () => {
   assert.equal(inspectExecution({ name: "write", arguments: { path: "lib/index.js" } }).deny, false);
   assert.equal(inspectExecution({ name: "other", arguments: { command: "rm -rf /tmp/x" } }).deny, false);
 });
+
+
+test("leading brace and negation tokens do not bypass rm inspection", () => {
+  blocked("{ rm -rf /; }");
+  blocked("{ rm -rf / }");
+  blocked("! rm -rf /");
+  blocked("{ echo safe; rm -rf /; }");
+});
+
+test("str_replace_editor is inspected as a file write tool", () => {
+  const hitSecret = inspectExecution({
+    name: "str_replace_editor",
+    arguments: { path: ".env", old_str: "A", new_str: "B" },
+  });
+  assert.equal(hitSecret.deny, true);
+  assert.equal(hitSecret.reason, "secret-write");
+
+  const hitSafe = inspectExecution({
+    name: "str_replace_editor",
+    arguments: { path: "src/index.js", old_str: "A", new_str: "B" },
+  });
+  assert.equal(hitSafe.deny, false);
+});

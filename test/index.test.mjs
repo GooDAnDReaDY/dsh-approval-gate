@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { apply, inject } from "../lib/index.js";
+import { apply, inject, Config } from "../lib/index.js";
 import { MESSAGES } from "../lib/messages.js";
 
 test("pre-execute asks for uncertain syntax while tools.guard stays deny-only", async () => {
@@ -131,4 +131,55 @@ test("apply integrates SecurityEngine waterfall into tools.guard and preExecute"
   // P4 Ask on uncertain syntax
   const askRes = await preExecute({ name: "bash", arguments: { command: "echo $(grep value" } }, async () => ({ kind: "allow" }));
   assert.equal(askRes.kind, "ask");
+});
+
+test("apply hooks catch throwing engine without crashing harness", async () => {
+  let guard;
+  let preExecute;
+  const ctx = {
+    get: () => undefined,
+    effect: (fn) => fn(),
+    on: (evt, fn) => { preExecute = fn; },
+    tools: { guard: (fn) => { guard = fn; } },
+    logger: { warn: () => {} },
+  };
+
+  const throwingEngine = {
+    decide() {
+      throw new Error("disaster in engine");
+    },
+  };
+
+  apply(ctx, { engine: throwingEngine });
+  assert.equal(typeof guard, "function");
+  assert.equal(typeof preExecute, "function");
+
+  const askRes = await preExecute({ name: "bash", arguments: { command: "ls" } }, async () => ({ kind: "allow" }));
+  assert.equal(askRes.kind, "ask");
+  assert.match(askRes.reason, /could not be fully inspected/);
+
+  const denial = guard({ name: "bash", arguments: { command: "ls" } });
+  assert.match(denial, /Blocked by dsh-approval-gate rule/);
+  assert.match(denial, /ruleUnknown|Blocked/);
+});
+
+test("Config schema includes volatile fields, workspaceDir and engine", () => {
+  const parsed = Config({
+    toolName: "custom_bash",
+    workspaceDir: "/my/project",
+  });
+  assert.equal(parsed.toolName, "custom_bash");
+  assert.equal(parsed.workspaceDir, "/my/project");
+
+  const ctx = {
+    get: () => undefined,
+    effect: (fn) => fn(),
+    on: () => {},
+    tools: { guard: () => {} },
+    logger: { warn: () => {} },
+  };
+  apply(ctx, { workspaceDir: "/my/project" });
+  assert.ok(ctx.approvalGate);
+  assert.equal(typeof ctx.approvalGate.addGrant, "function");
+  assert.equal(typeof ctx.approvalGate.resume, "function");
 });

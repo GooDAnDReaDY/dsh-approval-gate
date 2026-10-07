@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { canonicalizeFsPath, isPathTraversal, resolveSafePath } from "../lib/paths.js";
-import { inspectExecution } from "../lib/inspect.js";
+import { inspectExecution, inspectBashCommand } from "../lib/inspect.js";
 
 test("canonicalizeFsPath resolves . and .. segments cleanly", () => {
   assert.equal(canonicalizeFsPath("/var/log/../lib/./app"), "/var/lib/app");
@@ -73,4 +73,19 @@ test("inspectExecution allows safe writes inside workspaceDir", () => {
     { workspaceDir: "/home/app/project" }
   );
   assert.equal(hit.deny, false);
+});
+
+test("inspectBashCommand blocks absolute-path redirects outside workspace", () => {
+  const hit = inspectBashCommand("echo bad > /etc/cron.d/job", 0, { workspaceDir: "/workspace/project" });
+  assert.equal(hit.deny, true);
+  assert.equal(hit.reason, "path-traversal");
+
+  const allowedDev = inspectBashCommand("echo 1 > /dev/null", 0, { workspaceDir: "/workspace/project" });
+  assert.equal(allowedDev.deny, false);
+
+  const allowedTmp = inspectBashCommand("echo 1 > /tmp/output.log", 0, { workspaceDir: "/workspace/project" });
+  assert.equal(allowedTmp.deny, false);
+
+  const allowedInside = inspectBashCommand("echo 1 > /workspace/project/test.txt", 0, { workspaceDir: "/workspace/project" });
+  assert.equal(allowedInside.deny, false);
 });

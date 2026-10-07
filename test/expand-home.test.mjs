@@ -12,6 +12,8 @@ test("expandHome expands tilde and env variables correctly", () => {
   assert.equal(expandHome("$HOME/.env", fakeEnv), "/home/alice/.env");
   assert.equal(expandHome("${HOME}/config/settings.yml", fakeEnv), "/home/alice/config/settings.yml");
   assert.equal(expandHome("/var/log", fakeEnv), "/var/log");
+  assert.equal(expandHome("/opt/$HOME-backup", fakeEnv), "/opt/$HOME-backup");
+  assert.equal(expandHome("/var/$HOME_data", fakeEnv), "/var/$HOME_data");
   assert.equal(expandHome("", fakeEnv), "");
   assert.equal(expandHome(null, fakeEnv), null);
 

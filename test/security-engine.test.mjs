@@ -86,3 +86,44 @@ test("SecurityEngine P4 stage asks on uncertain shell syntax", () => {
   assert.equal(res.stage, "P4");
   assert.equal(res.reason, "interpreter-payload");
 });
+
+test("SecurityEngine P3 classifier error fails closed to P4 Ask", () => {
+  const classifier = () => {
+    throw new Error("classifier internal failure");
+  };
+  const engine = new SecurityEngine({ classifier });
+  const res = engine.decide({ name: "bash", arguments: { command: "some-unmatched-command" } });
+  assert.equal(res.verdict, "ask");
+  assert.equal(res.stage, "P4");
+  assert.equal(res.reason, "classifier-error");
+});
+
+test("SecurityEngine decide catches internal parser or inspection errors and fails closed", () => {
+  const engine = new SecurityEngine();
+  engine.bands.evaluate = () => {
+    throw new Error("parser exploded");
+  };
+  const res = engine.decide({ name: "bash", arguments: { command: "ls" } });
+  assert.equal(res.verdict, "ask");
+  assert.equal(res.stage, "P4");
+  assert.equal(res.reason, "inspect-error");
+});
+
+test("SecurityEngine forwards addGrant, getGrants and resume", () => {
+  const engine = new SecurityEngine();
+  const grant = engine.addGrant({ sessionId: "test-sess", tool: "bash", commandPrefix: "make build" });
+  assert.ok(grant);
+  assert.equal(grant.tool, "bash");
+
+  const grants = engine.getGrants("test-sess");
+  assert.equal(grants.length, 1);
+  assert.equal(grants[0].id, grant.id);
+
+  engine.breaker.countDeny("test-sess");
+  engine.breaker.countDeny("test-sess");
+  engine.breaker.countDeny("test-sess");
+  assert.equal(engine.breaker.isTripped("test-sess"), true);
+
+  engine.resume("test-sess");
+  assert.equal(engine.breaker.isTripped("test-sess"), false);
+});

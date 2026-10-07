@@ -82,3 +82,19 @@ test("CircuitBreaker isolates different sessions", () => {
   assert.equal(breaker.isTripped("alice"), true);
   assert.equal(breaker.isTripped("bob"), false);
 });
+
+test("CircuitBreaker caps tracked sessions to MAX_TRACKED_SESSIONS", () => {
+  const breaker = new CircuitBreaker();
+  for (let i = 0; i < 550; i++) {
+    breaker.countDeny(`session-${i}`);
+  }
+  assert.equal(breaker.sessions.size <= 500, true);
+});
+
+test("CircuitBreaker passive queries do not populate session map", () => {
+  const breaker = new CircuitBreaker();
+  assert.equal(breaker.isTripped("ghost-session"), false);
+  assert.equal(breaker.getState("ghost-session"), "active");
+  assert.equal(breaker.getHistory("ghost-session").length, 0);
+  assert.equal(breaker.sessions.has("ghost-session"), false);
+});
