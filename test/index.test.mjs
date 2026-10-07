@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { apply, inject } from "../lib/index.js";
+import { apply, inject, Config } from "../lib/index.js";
 import { MESSAGES } from "../lib/messages.js";
 
 test("pre-execute asks for uncertain syntax while tools.guard stays deny-only", async () => {
@@ -161,4 +161,25 @@ test("apply hooks catch throwing engine without crashing harness", async () => {
   const denial = guard({ name: "bash", arguments: { command: "ls" } });
   assert.match(denial, /Blocked by dsh-approval-gate rule/);
   assert.match(denial, /ruleUnknown|Blocked/);
+});
+
+test("Config schema includes volatile fields, workspaceDir and engine", () => {
+  const parsed = Config({
+    toolName: "custom_bash",
+    workspaceDir: "/my/project",
+  });
+  assert.equal(parsed.toolName, "custom_bash");
+  assert.equal(parsed.workspaceDir, "/my/project");
+
+  const ctx = {
+    get: () => undefined,
+    effect: (fn) => fn(),
+    on: () => {},
+    tools: { guard: () => {} },
+    logger: { warn: () => {} },
+  };
+  apply(ctx, { workspaceDir: "/my/project" });
+  assert.ok(ctx.approvalGate);
+  assert.equal(typeof ctx.approvalGate.addGrant, "function");
+  assert.equal(typeof ctx.approvalGate.resume, "function");
 });

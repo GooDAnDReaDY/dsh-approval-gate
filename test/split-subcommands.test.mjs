@@ -49,3 +49,10 @@ test("splitSubcommands handles empty and edge inputs", () => {
   assert.deepEqual(splitSubcommands("   "), []);
   assert.deepEqual(splitSubcommands(null), []);
 });
+
+test("splitSubcommands formats heredoc markers properly", () => {
+  const cmd = "cat <<EOF\nhello\nEOF";
+  const res = splitSubcommands(cmd);
+  assert.equal(res.length, 1);
+  assert.equal(res[0].command.includes("<<EOF"), true);
+});

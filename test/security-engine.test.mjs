@@ -108,3 +108,22 @@ test("SecurityEngine decide catches internal parser or inspection errors and fai
   assert.equal(res.stage, "P4");
   assert.equal(res.reason, "inspect-error");
 });
+
+test("SecurityEngine forwards addGrant, getGrants and resume", () => {
+  const engine = new SecurityEngine();
+  const grant = engine.addGrant({ sessionId: "test-sess", tool: "bash", commandPrefix: "make build" });
+  assert.ok(grant);
+  assert.equal(grant.tool, "bash");
+
+  const grants = engine.getGrants("test-sess");
+  assert.equal(grants.length, 1);
+  assert.equal(grants[0].id, grant.id);
+
+  engine.breaker.countDeny("test-sess");
+  engine.breaker.countDeny("test-sess");
+  engine.breaker.countDeny("test-sess");
+  assert.equal(engine.breaker.isTripped("test-sess"), true);
+
+  engine.resume("test-sess");
+  assert.equal(engine.breaker.isTripped("test-sess"), false);
+});
