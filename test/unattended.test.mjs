@@ -223,3 +223,28 @@ test("sessionTag formats session id cleanly without [object Object]", () => {
   assert.equal(sessionTag({ agent: { session: "sess-str" } }), " (session sess-str)");
   assert.equal(sessionTag({ agent: { session: {} } }), "");
 });
+
+test("tripped breaker in unattended mode is denied instead of allowed", async () => {
+  const { ctx, captured } = contextWith({ policy: "never" });
+  const customEngine = {
+    decide() {
+      return {
+        verdict: "ask",
+        stage: "P4",
+        reason: "circuit-breaker-tripped",
+        detail: "Circuit breaker tripped due to repeated security denials",
+      };
+    },
+  };
+  apply(ctx, { engine: customEngine });
+
+  let nextCalled = false;
+  const res = await captured.preExecute(UNCERTAIN, async () => {
+    nextCalled = true;
+    return { kind: "allow" };
+  });
+
+  assert.equal(nextCalled, false, "tripped breaker must NOT bypass in unattended mode");
+  assert.match(res, /Blocked by dsh-approval-gate rule/);
+  assert.match(res, /Circuit breaker tripped/i);
+});
