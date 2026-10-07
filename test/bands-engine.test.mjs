@@ -68,3 +68,19 @@ test("BandsEngine yields unmatched for ambiguous commands requiring deeper inspe
   assert.equal(bands.evaluate("bash", "docker run -it alpine"), "unmatched");
   assert.equal(bands.evaluate("bash", "rm old-output.log"), "unmatched");
 });
+
+
+test("BandsEngine refuses safe-allow for commands chained with operators or redirections", () => {
+  const bands = new BandsEngine();
+
+  // Chained commands after an allow-prefix must yield unmatched so segment analysis runs
+  assert.equal(bands.evaluate("bash", "ls; rm -rf /"), "unmatched");
+  assert.equal(bands.evaluate("bash", "cat file.txt && rm -rf /"), "unmatched");
+  assert.equal(bands.evaluate("bash", "cat file.txt | grep foo"), "unmatched");
+  assert.equal(bands.evaluate("bash", "echo a > /etc/passwd"), "unmatched");
+  assert.equal(bands.evaluate("bash", "echo $(rm -rf /)"), "unmatched");
+  assert.equal(bands.evaluate("bash", "cat `rm -rf /`"), "unmatched");
+
+  assert.equal(bands.isSafeInspectionCommand("ls ; rm -rf /"), false);
+  assert.equal(bands.isSafeInspectionCommand("cat file.txt && whoami"), false);
+});
