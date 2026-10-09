@@ -36,6 +36,11 @@ test("all runtime library files exist, are included in package files, and contai
   assert.ok(libFiles.includes("tokenizer.js"));
   assert.ok(libFiles.includes("inspect-env.js"));
   assert.ok(libFiles.includes("redact.js"));
+  assert.ok(libFiles.includes("fingerprint.js"));
+  assert.ok(libFiles.includes("cache.js"));
+  assert.ok(libFiles.includes("retry-exhaustion.js"));
+  assert.ok(libFiles.includes("ledger.js"));
+  assert.ok(libFiles.includes("audit-log.js"));
 
   for (const f of libFiles) {
     const lines = read(path.join("lib", f)).split("\n").length;

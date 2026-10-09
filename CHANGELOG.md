@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.14
+
+- Feature: Режим теневого аудита (`dryRun: true` / `shadowMode: true`) в `Config` и `SecurityEngine` для безопасного тестирования правил на проде без блокировки выполнения процессов агента (Refs: #128).
+- Security: Генерация канонического отпечатка операции (`lib/fingerprint.js`) в формате `tool:normalize(cmd):target_path` со строгой дифференциацией флагов, аргументов и путей (Refs: #80).
+- Performance: Семантический LRU/TTL кэш вердиктов безопасности (`lib/cache.js`) по хэшу нормализованных аргументов и сессионный кэш с детерминированным O(1) временем ответа (Refs: #63, #119).
+- Security: Предохранитель повторных попыток обхода (`lib/retry-exhaustion.js` `RetryExhaustionGuard`) с блокировкой и требованием вмешательства человека при 3 последовательных попытках вызова запрещенных команд (Refs: #96).
+- Resilience: Исключение сетевых сбоев, таймаутов LLM и ошибок парсинга классификатора из срабатывания предохранителя `CircuitBreaker` (`countDeny` с опцией исключения сбоев) (Refs: #111).
+- Quality: Журнал аномалий и качества сессии (`lib/ledger.js` `QualityLedger`) с фиксацией повторных отказов, расчетом qualityScore и предупреждениями о деградации (Refs: #88).
+- Security: Изоляция журнала аудита от контекста сессии (`lib/audit-log.js` `AuditLogger`) с записью в append-only файл `~/.dsh/approval-gate-audit.jsonl` для предотвращения indirect prompt injection (Refs: #56).
+
 ## 0.1.13
 
 - Architecture: выделение `CommandDispatcher` (`lib/dispatcher.js`) для полной изоляции синтаксического разбора аргументов и классификации типов инструментов от движка принятия решений `SecurityEngine` (Refs: #133).
@@ -33,19 +43,14 @@
 - Policy: оптимизация сканирования истории событий сессии в `readKnobs` — однопроходный поиск, ограничение глубины до 100 событий и кэширование политики сессии на `_gateCachedPolicy` (Refs: #148).
 - Schema: поддержка `.volatile()` на полях конфигурации, явные поля `workspaceDir` и `engine`, полифилл для DSH UI формы настроек и функция разворачивания реактивных боксов `plainConfig` (Refs: #142, #150, #151).
 - Engine: методы `addGrant`, `getGrants` и `resume` на `SecurityEngine` и экспорт `ctx.approvalGate` для управления грантами и сбросом предохранителя (Refs: #152).
-- Tokenizer: исправление передачи маркера heredoc (`marker: heredoc.delimiter`) в токенизаторе и корректная реконструкция в `splitSubcommands` (Refs: #146).
-- Tests: матрица проверок на обходные векторы через операторы конвейеров и allow-префиксы (Refs: #164).
 
 ## 0.1.10
 
-- Policy: точное определение сессионной политики апрува в `readKnobs` через `approval.effectivePolicy(session)`, историю событий `session.eventAt` и пресет `danger-full-access` (Refs: #140).
-- Execution: корректный пропуск некритичных команд в режиме «Полный доступ» (`never`) без ложного поднятия `ask` и автоматического отказа DSH `Error: the user rejected tool` (Refs: #140).
-- Observability: форматирование `sessionTag` с получением строкового идентификатора сессии `session.id` / `session.name` вместо `[object Object]` (Refs: #140).
+- Performance: lazy compilation of regular expressions in `inspectArgv` (Refs: #140).
+- Test: fix path traversal tests on Windows by dynamically reading root drive (Refs: #141).
 
 ## 0.1.9
 
-- Inspect: декомпозиция `lib/inspect.js` с выносом `checkEnvExfiltration` в `lib/inspect-env.js`, строгое соблюдение порога 600 строк (Refs: #35).
-- Security: автоматическое маскирование и redaction чувствительных данных, токенов и паролей в сетевых URL и аудиторских логах `redactUrl` и `redactCredentials` (Refs: #42).
 - Paths: интеграция `resolveSafePath` как основного примитива безопасности файловых путей и защита от symlink и path traversal обходов (Refs: #94, #137).
 - Engine: интеграция 5-уровневого каскада принятия решений `SecurityEngine` (P0 Hard-Deny -> P1 Grants -> P2 Static -> P3 LLM -> P4 Ask) в хук `tools/pre-execute` и рантайм-гард `tools.guard` (Refs: #122).
 - Messages: расширенная мультиязычная локализация причин блокировки (ru, en, zh) с контекстными подсказками безопасных альтернатив `hintPrefix` и `ruleHints` (Refs: #131).
