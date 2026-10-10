@@ -1,0 +1,81 @@
+version: 1
+catalog: builtin-high-risk
+description: Core Band 0 critical security threat definitions for dsh-approval-gate
+
+rules:
+  - id: builtin-recursive-rm
+    tool: bash
+    pattern: '(?:^|[;&|\s])rm\s+-[a-zA-Z]*[rR][a-zA-Z]*\s+(?:/(?:$|\s|\*)|/(?:var|etc|usr|bin|sbin|boot|lib|root|home)(?:/|$|\s|\*))'
+    verdict: deny
+    reason: recursive-rm
+    description: Recursive deletion of critical system directory
+
+  - id: builtin-process-signal
+    tool: bash
+    pattern: '(?:^|[;&|\s])kill\s+-[a-zA-Z0-9]*9\s+1(?:$|\s)'
+    verdict: deny
+    reason: process-signal
+    description: SIGKILL targeted at PID 1 / init
+
+  - id: builtin-service-stop
+    tool: bash
+    pattern: '(?:^|[;&|\s])systemctl\s+(?:stop|disable|mask|poweroff|reboot|halt)(?:$|\s)'
+    verdict: deny
+    reason: service-control
+    description: System service shutdown, masking, or machine halt
+
+  - id: builtin-mkfs-format
+    tool: bash
+    pattern: '(?:^|[;&|\s])(?:mkfs|fdisk|parted)\b'
+    verdict: deny
+    reason: mkfs-device
+    description: Block device partitioning or filesystem formatting
+
+  - id: builtin-curl-pipe-shell
+    tool: bash
+    pattern: '(?:curl|wget)\s+[^|;]+?\|\s*(?:sudo\s+)?(?:bash|sh|zsh|python|perl|ruby)'
+    verdict: deny
+    reason: curl-pipe
+    description: Piping downloaded remote web content directly into shell interpreter
+
+  - id: builtin-reverse-shell-nc
+    tool: bash
+    pattern: '(?:^|[;&|\s])(?:nc|netcat|ncat)\s+.*-[a-zA-Z0-9]*e\s+(?:/bin/(?:ba)?sh|sh)'
+    verdict: deny
+    reason: band-hard-deny
+    description: Netcat reverse shell execution
+
+  - id: builtin-reverse-shell-tcp
+    tool: bash
+    pattern: '/dev/tcp/\d+\.\d+\.\d+\.\d+/\d+'
+    verdict: deny
+    reason: band-hard-deny
+    description: Direct bash TCP socket reverse shell attempt
+
+  - id: builtin-git-reset-hard
+    tool: bash
+    pattern: '(?:^|[;&|\s])git\s+reset\s+--hard'
+    verdict: deny
+    reason: git-reset-hard
+    description: Destructive git reset --hard discarding working tree
+
+  - id: builtin-git-clean-force
+    tool: bash
+    pattern: '(?:^|[;&|\s])git\s+clean\s+-[a-zA-Z0-9]*f'
+    verdict: deny
+    reason: git-clean
+    description: Destructive git clean -f discarding untracked files
+
+  - id: builtin-git-force-push
+    tool: bash
+    pattern: '(?:^|[;&|\s])git\s+push\s+.*(?:--force|-f\b|\+refs/)'
+    verdict: deny
+    reason: git-force-push
+    description: Destructive forced push to git repository
+
+  - id: builtin-chmod-chown-root
+    tool: bash
+    pattern: '(?:^|[;&|\s])(?:chmod|chown)\s+-[a-zA-Z]*[rR].*\s+/(?:$|\s|\*|etc|var|usr|root)'
+    verdict: deny
+    reason: chmod-chown
+    description: Recursive permission mutation of system root directories
