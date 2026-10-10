@@ -16,6 +16,7 @@ test("public package identity matches the host patch", () => {
   assert.ok(pkg.files.includes("README.ru.md"));
   assert.ok(pkg.files.includes("README.md"));
   assert.ok(pkg.files.includes("README.zh.md"));
+  assert.ok(pkg.files.includes("rules"));
   assert.equal(hostName, "dsh-approval-gate");
   assert.ok(read("cordis.patch.yml").includes("name: '@goodandready/dsh-approval-gate'"));
 });
@@ -41,6 +42,10 @@ test("all runtime library files exist, are included in package files, and contai
   assert.ok(libFiles.includes("retry-exhaustion.js"));
   assert.ok(libFiles.includes("ledger.js"));
   assert.ok(libFiles.includes("audit-log.js"));
+  assert.ok(libFiles.includes("yaml-parser.js"));
+  assert.ok(libFiles.includes("when-matcher.js"));
+  assert.ok(libFiles.includes("hotwords.js"));
+  assert.ok(libFiles.includes("rules-loader.js"));
 
   for (const f of libFiles) {
     const lines = read(path.join("lib", f)).split("\n").length;
