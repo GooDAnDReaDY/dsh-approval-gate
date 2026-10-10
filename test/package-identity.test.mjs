@@ -46,6 +46,7 @@ test("all runtime library files exist, are included in package files, and contai
   assert.ok(libFiles.includes("when-matcher.js"));
   assert.ok(libFiles.includes("hotwords.js"));
   assert.ok(libFiles.includes("rules-loader.js"));
+  assert.ok(libFiles.includes("counters.js"));
 
   for (const f of libFiles) {
     const lines = read(path.join("lib", f)).split("\n").length;
