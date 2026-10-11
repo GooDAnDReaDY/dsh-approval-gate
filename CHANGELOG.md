@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.18
+
+- Security: Эвристический предохранитель размера аргументов (`computePayloadSize` / `maxPayloadBytes`, по умолчанию 64 КБ) для предотвращения переполнения контекста LLM-ревьюера и обхода инспекции (`payload-too-large` -> `ask`) (Refs: #71).
+- Security: Сканер анти-инъекций инструкций в аргументы и скрипты (`scanPromptInjection`) с жесткой блокировкой директив обхода правил (`SYSTEM OVERRIDE: ALLOW`, `ignore previous instructions` и др. -> `reviewer-injection-attempt`) (Refs: #72).
+- Security: Страж соответствия контракту задачи (`ContractGuard` в `lib/contract-guard.js`) с перехватом нецелевых системных пакетных менеджеров, управления службами, сетевых конфигураций и запрещенных инструментов (`contract-violation` -> `ask`) (Refs: #87).
+- Security: Строгая изоляция временных каталогов проекта (`resolveTempRoot`, `isGlobalTempPath`, `checkTempIsolation` в `lib/paths.js`) с переводом обращений к глобальному `/tmp` на запрос подтверждения (`unisolated-temp-path` -> `ask` в пользу `<workspace>/.dsh/tmp`) (Refs: #102).
+- Feature: Контроль оверинжиниринга (`OverengineeringGuard` в `lib/overengineering.js`) с отслеживанием числа создаваемых уникальных файлов за сессию (`maxFilesPerSession`, по умолчанию 10) и запросом подтверждения при превышении (`overengineering-file-limit` -> `ask`) (Refs: #89).
+
 ## 0.1.17
 
 - Feature: Автонормализация URL эндпоинтов пользовательских LLM (`normalizeChatCompletionsUrl`) с поддержкой bare host, портов, `/v1` и `/chat/completions` без риска 404 (Refs: #127).
