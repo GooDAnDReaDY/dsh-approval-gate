@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.23
+
+- Tech-debt: Версионирование схемы хранения сессионных вердиктов (`CURRENT_SCHEMA_VERSION = 3` в `lib/ledger.js`) с полной обратной совместимостью и бесшовной миграцией исторических форматов v1/v2/v3 (`migrateVerdictRecord`) (Refs: #73).
+- Feature: Поддержка двухтрековых маркеров (`Dual-Track Markers` в `lib/dualtrack.js`: `TRACK_TYPES.INTERNAL` vs `TRACK_TYPES.EXTERNAL`) для четкого разделения скрытых служебных шагов агента и пользовательских мутаций проекта (Refs: #92).
+- Feature: Сессионное переключение режимов гейта (`auto-approval` vs `manual` / `strict` / `hybrid` в `lib/session-modes.js`) на основе активного пресета сессии (`resolveSessionGateMode`, `applySessionModePolicy`, `SessionModeRegistry`) (Refs: #61).
+- Feature: Сбор доказательного досье (`Evidence Dossier` в `lib/dossier.js`: инструмент, diff, терминал, исходный промпт юзера) с безопасной санитизацией чувствительных токенов и защитой от переполнения памяти (Refs: #64).
+- Security: Детекция отклонения от траектории задачи (`Trajectory Drift Detection` в `lib/drift.js`: `TrajectoryTracker`) с перехватом несанкционированного сканирования сети, поиска учетных данных и системного зондирования вне рамок цели сессии (Refs: #68).
+
 ## 0.1.22
 
 - Feature: Наследование разрешений в иерархии субагентов через `parentSession lineage authority` (`LineageManager` в `lib/lineage.js`) с безопасным обходом дерева предков и защитой от циклических ссылок (Refs: #98).
