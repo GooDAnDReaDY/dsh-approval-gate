@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.27
+
+- Feature: Интерактивный визуальный редактор правил и белых списков путей (ApprovalGateSettingsCard в lib/client.js, TimelineService endpoints /rules в lib/timeline-service.js, слот settings.plugin.item) (Refs: #49).
+- Feature: Интерфейс управления выученными правилами (Learned Rules Manager в lib/client.js, ConfirmationLearner.revoke в lib/learning.js, REST endpoints /learned-rules, /learned-rules/revoke в lib/timeline-service.js) с мгновенным отзывом правил по клику (Refs: #84).
+- Feature: Ненавязчивая плавающая статусная плашка (AutoApprovalToast в lib/client.js) при фоновом авто-одобрении операций с авто-скрытием через 3 секунды (Refs: #83).
+- Feature: Визуальный цветной бейдж активного режима гейта (GateModeBadge в lib/client.js, endpoint /mode в lib/timeline-service.js, слот toolbar.badge) в тулбаре DSH Web (Refs: #116).
+
 ## 0.1.26
 
 - Feature: Встроенный модальный просмотрщик изменений (Unified Diff Panel в lib/diff-viewer.js, lib/client.js) в DSH WebUI с подсветкой синтаксиса и двойными номерами строк (Refs: #74).
