@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.25
+
+- Security: Асинхронная гонка решения (`raceHumanDecision` в `lib/race-decision.js`) между подтверждением человека и настраиваемым таймером хоста с гарантированной защитой от зависания сессий и fail-closed обработкой `lockedAsk` (Refs: #50).
+- Feature: Перехват открытого диалога подтверждения через LLM Pre-emption Claim (`RaceHumanHandle.claim` в `lib/race-decision.js`) с автоматическим закрытием модального окна при быстром утвердительном вердикте модели (Refs: #51).
+- Feature: HMR-перезагрузка правил на лету (`RulesHmrWatcher` в `lib/rules-hmr.js`) на стандартном `fs.watch` Node.js с дебаунсом и атомарной перекомпиляцией правил в памяти без перезапуска демона dsh (Refs: #43).
+- Security: Маппинг сетевых политик на официальные режимы песочницы DSH (`resolveNetworkPolicy`, `checkNetworkAccess` в `lib/network-sandbox.js`: `read-only` -> `deny-all`, `workspace-write` -> `whitelist-only`, `danger-full-access` -> `allow-all`) (Refs: #41).
+- Security: Встроенный локальный HTTP/CONNECT forward proxy (`LocalEgressProxy` в `lib/forward-proxy.js`) для надежного перехвата сетевого egress подпроцессов bash (`HTTP_PROXY`, `ALL_PROXY`) и блокировки несанкционированных хостов (Refs: #39).
+
 ## 0.1.24
 
 - Security: Жесткое исключение критических категорий из механизма авто-обучения (`canLearnOperation` в `lib/learning.js`) с гарантированным запретом запоминания деструктивных операций (`rm`), секретов (`.env`, `.ssh`), эскалации прав (`sudo`) и системных путей (Refs: #81).
