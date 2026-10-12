@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.19
+
+- Security: Структурированная категоризация рисков операций по 5 стандартизированным бакетам (`READ_ONLY`, `WORKSPACE`, `EGRESS`, `SYSTEM`, `SECRETS`) в `lib/risk.js` с приоритетной оценкой чувствительности путей, команд и сетевых направлений (Refs: #58).
+- Security: Многомерное тегирование рисков (`risk_tags`: `read-only`, `file-mutation`, `network`, `git`, `credentials`, `package-manager`, `system-mutation`, `privilege-escalation`, `destructive`) для детального анализа и обогащения решений безопасности (Refs: #70).
+- Resilience: Трекер задержки семантического классификатора (`ClassifierLatencyTracker` в `lib/latency.js`) со скользящим окном p95/avg и автоматическим переходом на детерминированные правила при превышении SLA (`classifier-sla-fallback` -> `ask`) (Refs: #57).
+- Resilience: Плавный fallback при несовместимости эндпоинта с OpenAI JSON-mode (`isShapeRejectError`), извлечение JSON из markdown/raw-ответов (`extractJsonPayload`) и повторный запрос без `response_format` для Ollama/vLLM (Refs: #59).
+- Security: Строгая Schemastery-схема вердиктов классификатора (`ClassifierVerdictSchema`, `validateClassifierResponse`) с fail-closed защитой от некорректных/неполных ответов модели (`malformed-classifier-response` -> `ask`) (Refs: #66).
+
 ## 0.1.18
 
 - Security: Эвристический предохранитель размера аргументов (`computePayloadSize` / `maxPayloadBytes`, по умолчанию 64 КБ) для предотвращения переполнения контекста LLM-ревьюера и обхода инспекции (`payload-too-large` -> `ask`) (Refs: #71).
