@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.24
+
+- Security: Жесткое исключение критических категорий из механизма авто-обучения (`canLearnOperation` в `lib/learning.js`) с гарантированным запретом запоминания деструктивных операций (`rm`), секретов (`.env`, `.ssh`), эскалации прав (`sudo`) и системных путей (Refs: #81).
+- Feature: Авто-обучение правилам на основе N-1 ручных подтверждений пользователя (`ConfirmationLearner` в `lib/learning.js`) с автоматическим переводом рутинных операций в `learned-auto-allow` на стадии P1 (Refs: #79).
+- Feature: Архитектура независимого ревьюера (Second-Model AI) без права самоодобрения основным агентом (`IndependentReviewer`, `SAFETY_REVIEWER_SYSTEM_PROMPT` в `lib/reviewer.js`) со строгим разделением полномочий (Separation of Duties, Refs: #62).
+- Feature: Автономный раннер бенчмарков безопасности (`runEvaluation`, `formatEvaluationReport` в `lib/eval-runner.js`, CLI `bin/eval.mjs`) для объективного замера False Positive Rate (FPR) и False Negative Rate (FNR) с интеграцией в `npm run eval` (Refs: #69).
+- Feature: Валидация семантического сходства команд (`canonicalizeCommand`, `isSemanticallyEquivalent`, `validateSemanticSimilarity` в `lib/similarity.js`) с поддержкой эквивалентностей пакетных менеджеров (`npm test` vs `pnpm test`) и Flash-модели (Refs: #85).
+
 ## 0.1.23
 
 - Tech-debt: Версионирование схемы хранения сессионных вердиктов (`CURRENT_SCHEMA_VERSION = 3` в `lib/ledger.js`) с полной обратной совместимостью и бесшовной миграцией исторических форматов v1/v2/v3 (`migrateVerdictRecord`) (Refs: #73).
