@@ -1,26 +1,37 @@
 {
   "name": "@goodandready/dsh-approval-gate",
-  "version": "0.1.13",
+  "version": "0.1.26",
   "description": "Host-only command safety gate for DeepSeek Harness: blocks recognized dangerous operations and requests DSH approval when a command cannot be inspected.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
     "./package.json": "./package.json",
-    "./cordis.patch.yml": "./cordis.patch.yml"
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./client": "./lib/client.js"
   },
   "files": [
     "lib",
+    "rules",
     "cordis.patch.yml",
     "README.md",
     "README.zh.md",
     "README.ru.md",
     "CHANGELOG.md",
-    "LICENSE"
+    "LICENSE",
+    "bin"
   ],
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-locale"
+      ]
     }
   },
   "license": "MIT",
@@ -37,7 +48,8 @@
     "url": "https://github.com/GooDAnDReaDY/dsh-approval-gate/issues"
   },
   "scripts": {
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "eval": "node bin/eval.mjs"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
@@ -50,5 +62,8 @@
     "security",
     "approval-gate",
     "safety"
-  ]
+  ],
+  "bin": {
+    "dsh-approval-eval": "./bin/eval.mjs"
+  }
 }

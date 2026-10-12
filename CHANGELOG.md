@@ -1,5 +1,111 @@
 # Changelog
 
+## 0.1.26
+
+- Feature: Встроенный модальный просмотрщик изменений (Unified Diff Panel в lib/diff-viewer.js, lib/client.js) в DSH WebUI с подсветкой синтаксиса и двойными номерами строк (Refs: #74).
+- Feature: Сворачивание неизмененных строк (Hunk Folding в lib/diff-viewer.js, lib/client.js) с контекстом и разворачиванием по клику (Refs: #75).
+- Feature: Вкладка аудита и одобрений в правой панели сессии DSH (ApprovalTimelineTab в lib/timeline-service.js, lib/client.js, слот conversation.view) (Refs: #82).
+- Feature: Сводная карточка итогов раунда (TurnCardTracker в lib/turn-card.js) с отчетом о вызовах и правилах (Refs: #86).
+- Feature: Визуальный таймер обратного отсчета до авто-решения в карточке согласования (CountdownBadge в lib/client.js) (Refs: #60).
+
+## 0.1.25
+
+- Security: Асинхронная гонка решения (`raceHumanDecision` в `lib/race-decision.js`) между подтверждением человека и настраиваемым таймером хоста с гарантированной защитой от зависания сессий и fail-closed обработкой `lockedAsk` (Refs: #50).
+- Feature: Перехват открытого диалога подтверждения через LLM Pre-emption Claim (`RaceHumanHandle.claim` в `lib/race-decision.js`) с автоматическим закрытием модального окна при быстром утвердительном вердикте модели (Refs: #51).
+- Feature: HMR-перезагрузка правил на лету (`RulesHmrWatcher` в `lib/rules-hmr.js`) на стандартном `fs.watch` Node.js с дебаунсом и атомарной перекомпиляцией правил в памяти без перезапуска демона dsh (Refs: #43).
+- Security: Маппинг сетевых политик на официальные режимы песочницы DSH (`resolveNetworkPolicy`, `checkNetworkAccess` в `lib/network-sandbox.js`: `read-only` -> `deny-all`, `workspace-write` -> `whitelist-only`, `danger-full-access` -> `allow-all`) (Refs: #41).
+- Security: Встроенный локальный HTTP/CONNECT forward proxy (`LocalEgressProxy` в `lib/forward-proxy.js`) для надежного перехвата сетевого egress подпроцессов bash (`HTTP_PROXY`, `ALL_PROXY`) и блокировки несанкционированных хостов (Refs: #39).
+
+## 0.1.24
+
+- Security: Жесткое исключение критических категорий из механизма авто-обучения (`canLearnOperation` в `lib/learning.js`) с гарантированным запретом запоминания деструктивных операций (`rm`), секретов (`.env`, `.ssh`), эскалации прав (`sudo`) и системных путей (Refs: #81).
+- Feature: Авто-обучение правилам на основе N-1 ручных подтверждений пользователя (`ConfirmationLearner` в `lib/learning.js`) с автоматическим переводом рутинных операций в `learned-auto-allow` на стадии P1 (Refs: #79).
+- Feature: Архитектура независимого ревьюера (Second-Model AI) без права самоодобрения основным агентом (`IndependentReviewer`, `SAFETY_REVIEWER_SYSTEM_PROMPT` в `lib/reviewer.js`) со строгим разделением полномочий (Separation of Duties, Refs: #62).
+- Feature: Автономный раннер бенчмарков безопасности (`runEvaluation`, `formatEvaluationReport` в `lib/eval-runner.js`, CLI `bin/eval.mjs`) для объективного замера False Positive Rate (FPR) и False Negative Rate (FNR) с интеграцией в `npm run eval` (Refs: #69).
+- Feature: Валидация семантического сходства команд (`canonicalizeCommand`, `isSemanticallyEquivalent`, `validateSemanticSimilarity` в `lib/similarity.js`) с поддержкой эквивалентностей пакетных менеджеров (`npm test` vs `pnpm test`) и Flash-модели (Refs: #85).
+
+## 0.1.23
+
+- Tech-debt: Версионирование схемы хранения сессионных вердиктов (`CURRENT_SCHEMA_VERSION = 3` в `lib/ledger.js`) с полной обратной совместимостью и бесшовной миграцией исторических форматов v1/v2/v3 (`migrateVerdictRecord`) (Refs: #73).
+- Feature: Поддержка двухтрековых маркеров (`Dual-Track Markers` в `lib/dualtrack.js`: `TRACK_TYPES.INTERNAL` vs `TRACK_TYPES.EXTERNAL`) для четкого разделения скрытых служебных шагов агента и пользовательских мутаций проекта (Refs: #92).
+- Feature: Сессионное переключение режимов гейта (`auto-approval` vs `manual` / `strict` / `hybrid` в `lib/session-modes.js`) на основе активного пресета сессии (`resolveSessionGateMode`, `applySessionModePolicy`, `SessionModeRegistry`) (Refs: #61).
+- Feature: Сбор доказательного досье (`Evidence Dossier` в `lib/dossier.js`: инструмент, diff, терминал, исходный промпт юзера) с безопасной санитизацией чувствительных токенов и защитой от переполнения памяти (Refs: #64).
+- Security: Детекция отклонения от траектории задачи (`Trajectory Drift Detection` в `lib/drift.js`: `TrajectoryTracker`) с перехватом несанкционированного сканирования сети, поиска учетных данных и системного зондирования вне рамок цели сессии (Refs: #68).
+
+## 0.1.22
+
+- Feature: Наследование разрешений в иерархии субагентов через `parentSession lineage authority` (`LineageManager` в `lib/lineage.js`) с безопасным обходом дерева предков и защитой от циклических ссылок (Refs: #98).
+- Feature: Сквозная трассировка вызовов с извлечением и связыванием `callId`, `agentId` и `subagentId` со всеми событиями перехвата, аудита и вердиктов безопасности (Refs: #47).
+- Feature: Динамическая генерация и инъекция инструкций безопасности в системный промпт агента (`AUTO_MODE_AGENT_GUIDANCE` в `lib/guidance.js`) с мультиязычной поддержкой (EN/RU/ZH) и идемпотентным маркером (Refs: #99).
+- Feature: Автоматическое восстановление при избыточных запросах прав песочницы (`Redundant Sandbox Recovery` в `lib/escalation.js`) с генерацией конкретных рекомендаций по повтору безопасных внутрипроектных команд без `danger-full-access` (Refs: #101).
+- Security: Протокол точечной эскалации привилегий (`checkEscalationJustification` в `lib/escalation.js`) с требованием обязательного содержательного обоснования (`justification`, не менее 10 символов) для системных операций (Refs: #107).
+
+## 0.1.21
+
+- Feature: Автоматические легковесные пре-снимки файлов (`Pre-execution Snapshots` в `lib/snapshots.js`) перед выполнением мутирующих инструментов с отслеживанием размера и FIFO-вытеснением по сессиям (Refs: #77).
+- Feature: Однократный откат изменений (`Undo this change` / `rollbackSnapshot`) из сохраненного пре-снимка с восстановлением исходного контента или удалением созданного файла (Refs: #76).
+- Feature: Двухуровневая очистка файловых снимков (`clearSnapshots` для безопасной очистки текущей сессии без влияния на соседние диалоги vs `clearAllSnapshots` для глобального сброса) (Refs: #78).
+- Feature: Многоуровневая категоризация масштаба влияния операций (`Measure Kinds` в `lib/measure-kinds.js`: `local-single`, `workspace-wide`, `system-level`) с обогащением вердикта и фиксацией в аудите (Refs: #97).
+- Security: Завершение перехода #163 — перевод конфигурации по умолчанию в строгий fail-closed режим (`defaultVerdict: 'ask'`) для неизвестных команд оболочки (Refs: #172).
+
+## 0.1.20
+
+- Feature: Безопасная альтернатива необратимому удалению (`Reversible Trash Move` в `lib/trash.js`) с переносом удаляемых файлов в изолированную сессионную корзину `<workspace>/.dsh/trash/<session_id>/` вместо деструктивного `rm` (Refs: #104).
+- Feature: Реестр сессионных артефактов (`ArtifactRegistry` в `lib/artifacts.js`) для автоматического отслеживания и безопасного разрешения очистки временных файлов текущей сессии на стадии P1 без спама подтверждениями (Refs: #100).
+- Security: Парсер проектных правил безопасности из `AGENTS.md` (`lib/agents-parser.js`) с жестким перехватом запрещенных команд и путей на стадии P0 (`agents-md-prohibited-command`, `agents-md-prohibited-path` -> `deny`) (Refs: #91).
+- Resilience: Проверка совместимости версий хоста DSH (`assertHarnessCompatibility` в `lib/compat.js`) и безопасные полифилы `provideServicePolyfill` / `registerHookPolyfill` для бесшовной работы на различных версиях Cordis (Refs: #106).
+- Security: Страж зависимостей проекта (`VersionGuard` в `lib/version-guard.js`) с автоматическим обнаружением мажорных обновлений в `package.json` и переводом их на ручное подтверждение человеком (`major-version-bump` -> `ask`) (Refs: #95).
+
+## 0.1.19
+
+- Security: Структурированная категоризация рисков операций по 5 стандартизированным бакетам (`READ_ONLY`, `WORKSPACE`, `EGRESS`, `SYSTEM`, `SECRETS`) в `lib/risk.js` с приоритетной оценкой чувствительности путей, команд и сетевых направлений (Refs: #58).
+- Security: Многомерное тегирование рисков (`risk_tags`: `read-only`, `file-mutation`, `network`, `git`, `credentials`, `package-manager`, `system-mutation`, `privilege-escalation`, `destructive`) для детального анализа и обогащения решений безопасности (Refs: #70).
+- Resilience: Трекер задержки семантического классификатора (`ClassifierLatencyTracker` в `lib/latency.js`) со скользящим окном p95/avg и автоматическим переходом на детерминированные правила при превышении SLA (`classifier-sla-fallback` -> `ask`) (Refs: #57).
+- Resilience: Плавный fallback при несовместимости эндпоинта с OpenAI JSON-mode (`isShapeRejectError`), извлечение JSON из markdown/raw-ответов (`extractJsonPayload`) и повторный запрос без `response_format` для Ollama/vLLM (Refs: #59).
+- Security: Строгая Schemastery-схема вердиктов классификатора (`ClassifierVerdictSchema`, `validateClassifierResponse`) с fail-closed защитой от некорректных/неполных ответов модели (`malformed-classifier-response` -> `ask`) (Refs: #66).
+
+## 0.1.18
+
+- Security: Эвристический предохранитель размера аргументов (`computePayloadSize` / `maxPayloadBytes`, по умолчанию 64 КБ) для предотвращения переполнения контекста LLM-ревьюера и обхода инспекции (`payload-too-large` -> `ask`) (Refs: #71).
+- Security: Сканер анти-инъекций инструкций в аргументы и скрипты (`scanPromptInjection`) с жесткой блокировкой директив обхода правил (`SYSTEM OVERRIDE: ALLOW`, `ignore previous instructions` и др. -> `reviewer-injection-attempt`) (Refs: #72).
+- Security: Страж соответствия контракту задачи (`ContractGuard` в `lib/contract-guard.js`) с перехватом нецелевых системных пакетных менеджеров, управления службами, сетевых конфигураций и запрещенных инструментов (`contract-violation` -> `ask`) (Refs: #87).
+- Security: Строгая изоляция временных каталогов проекта (`resolveTempRoot`, `isGlobalTempPath`, `checkTempIsolation` в `lib/paths.js`) с переводом обращений к глобальному `/tmp` на запрос подтверждения (`unisolated-temp-path` -> `ask` в пользу `<workspace>/.dsh/tmp`) (Refs: #102).
+- Feature: Контроль оверинжиниринга (`OverengineeringGuard` в `lib/overengineering.js`) с отслеживанием числа создаваемых уникальных файлов за сессию (`maxFilesPerSession`, по умолчанию 10) и запросом подтверждения при превышении (`overengineering-file-limit` -> `ask`) (Refs: #89).
+
+## 0.1.17
+
+- Feature: Автонормализация URL эндпоинтов пользовательских LLM (`normalizeChatCompletionsUrl`) с поддержкой bare host, портов, `/v1` и `/chat/completions` без риска 404 (Refs: #127).
+- Resilience: Устойчивость к сбоям семантического классификатора с автоматическими повторными попытками (`withLlmRetry`) при 5xx, 429 и сетевых таймаутах с быстрым бэкоффом (Refs: #129).
+- Feature: Настраиваемая политика поведения при таймауте классификатора (`timeoutPolicy`: strict vs permissive) с безопасным пропуском низкорисковых операций чтения (Refs: #118).
+- Security: Санитизация и удаление персональных данных и секретов из аргументов (`sanitizeClassifierInput`) перед отправкой во внешний LLM API (токены OpenAI/Anthropic/GitHub/NPM, пароли, Bearer, приватные ключи) (Refs: #115).
+- Refactor: Ограничение размера контекста при классификации (`truncateClassifierContext`) первыми 1000 символами с фиксацией общего объема для минимизации расхода токенов (Refs: #117).
+
+## 0.1.16
+
+- Audit: Отказоустойчивый аудит с блокировкой (`fail-closed audit`) при невозможности записи в append-only журнал (Refs: #53).
+- Audit: Однопроходная обратная ротация лога аудита без амплификации ввода-вывода (`auditRotateContent` до 5 МБ / 5000 строк) с сохранением хвоста (Refs: #54).
+- Security: Нестираемые метки очистки журнала аудита (`tombstones`) вместо тихого удаления с сохранением sha256 и непрерывной цепочки событий (Refs: #55).
+- Metrics: Счетчики перехватов (`BlockCounters`) и метрики частоты срабатывания правил (по стадиям, вердиктам, категориям и правилам) со snapshot в настройках (Refs: #48).
+- Security: Блокировка таймаута на безусловный отказ (`lockedAsk`) для критических операций (sudo, rm -rf, ssh-keys, mkfs, reverse shell) с запретом обхода в unattended режиме (Refs: #52).
+
+## 0.1.15
+
+- Rules: Каскадный декларативный YAML-конфиг правил `rules.yaml` (`.dsh/rules.yaml` в проекте и `~/.dsh/rules.yaml` пользователя) с поддержкой allow/deny/ask политик (Refs: #38).
+- Rules: Вынесение каталога встроенных критических угроз нулевого уровня (P0) в отчуждаемый версионируемый каталог `rules/builtin-high-risk.yaml` (Refs: #45).
+- Rules: Условные предикаты правил `when` с сопоставлением контекста окружения (ОС `os`, git-ветка `branch`, переменные окружения `env` и инструмент `tool`) с поддержкой отрицания `!` (Refs: #44).
+- Performance: Высокоскоростной пре-фильтр ключевых слов `HotwordsMatcher` (rm, kill, shadow, sudoers, curl, format и др.) для микросекундного пропуска безопасных команд (Refs: #93).
+- Testing: Корпус тестовых векторов `test/vectors/corpus.json` из 110+ команд с автотестом контроля регрессий (FPR=0, FNR=0) (Refs: #46).
+
+## 0.1.14
+
+- Feature: Режим теневого аудита (`dryRun: true` / `shadowMode: true`) в `Config` и `SecurityEngine` для безопасного тестирования правил на проде без блокировки выполнения процессов агента (Refs: #128).
+- Security: Генерация канонического отпечатка операции (`lib/fingerprint.js`) в формате `tool:normalize(cmd):target_path` со строгой дифференциацией флагов, аргументов и путей (Refs: #80).
+- Performance: Семантический LRU/TTL кэш вердиктов безопасности (`lib/cache.js`) по хэшу нормализованных аргументов и сессионный кэш с детерминированным O(1) временем ответа (Refs: #63, #119).
+- Security: Предохранитель повторных попыток обхода (`lib/retry-exhaustion.js` `RetryExhaustionGuard`) с блокировкой и требованием вмешательства человека при 3 последовательных попытках вызова запрещенных команд (Refs: #96).
+- Resilience: Исключение сетевых сбоев, таймаутов LLM и ошибок парсинга классификатора из срабатывания предохранителя `CircuitBreaker` (`countDeny` с опцией исключения сбоев) (Refs: #111).
+- Quality: Журнал аномалий и качества сессии (`lib/ledger.js` `QualityLedger`) с фиксацией повторных отказов, расчетом qualityScore и предупреждениями о деградации (Refs: #88).
+- Security: Изоляция журнала аудита от контекста сессии (`lib/audit-log.js` `AuditLogger`) с записью в append-only файл `~/.dsh/approval-gate-audit.jsonl` для предотвращения indirect prompt injection (Refs: #56).
+
 ## 0.1.13
 
 - Architecture: выделение `CommandDispatcher` (`lib/dispatcher.js`) для полной изоляции синтаксического разбора аргументов и классификации типов инструментов от движка принятия решений `SecurityEngine` (Refs: #133).
@@ -33,19 +139,14 @@
 - Policy: оптимизация сканирования истории событий сессии в `readKnobs` — однопроходный поиск, ограничение глубины до 100 событий и кэширование политики сессии на `_gateCachedPolicy` (Refs: #148).
 - Schema: поддержка `.volatile()` на полях конфигурации, явные поля `workspaceDir` и `engine`, полифилл для DSH UI формы настроек и функция разворачивания реактивных боксов `plainConfig` (Refs: #142, #150, #151).
 - Engine: методы `addGrant`, `getGrants` и `resume` на `SecurityEngine` и экспорт `ctx.approvalGate` для управления грантами и сбросом предохранителя (Refs: #152).
-- Tokenizer: исправление передачи маркера heredoc (`marker: heredoc.delimiter`) в токенизаторе и корректная реконструкция в `splitSubcommands` (Refs: #146).
-- Tests: матрица проверок на обходные векторы через операторы конвейеров и allow-префиксы (Refs: #164).
 
 ## 0.1.10
 
-- Policy: точное определение сессионной политики апрува в `readKnobs` через `approval.effectivePolicy(session)`, историю событий `session.eventAt` и пресет `danger-full-access` (Refs: #140).
-- Execution: корректный пропуск некритичных команд в режиме «Полный доступ» (`never`) без ложного поднятия `ask` и автоматического отказа DSH `Error: the user rejected tool` (Refs: #140).
-- Observability: форматирование `sessionTag` с получением строкового идентификатора сессии `session.id` / `session.name` вместо `[object Object]` (Refs: #140).
+- Performance: lazy compilation of regular expressions in `inspectArgv` (Refs: #140).
+- Test: fix path traversal tests on Windows by dynamically reading root drive (Refs: #141).
 
 ## 0.1.9
 
-- Inspect: декомпозиция `lib/inspect.js` с выносом `checkEnvExfiltration` в `lib/inspect-env.js`, строгое соблюдение порога 600 строк (Refs: #35).
-- Security: автоматическое маскирование и redaction чувствительных данных, токенов и паролей в сетевых URL и аудиторских логах `redactUrl` и `redactCredentials` (Refs: #42).
 - Paths: интеграция `resolveSafePath` как основного примитива безопасности файловых путей и защита от symlink и path traversal обходов (Refs: #94, #137).
 - Engine: интеграция 5-уровневого каскада принятия решений `SecurityEngine` (P0 Hard-Deny -> P1 Grants -> P2 Static -> P3 LLM -> P4 Ask) в хук `tools/pre-execute` и рантайм-гард `tools.guard` (Refs: #122).
 - Messages: расширенная мультиязычная локализация причин блокировки (ru, en, zh) с контекстными подсказками безопасных альтернатив `hintPrefix` и `ruleHints` (Refs: #131).
