@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.20
+
+- Feature: Безопасная альтернатива необратимому удалению (`Reversible Trash Move` в `lib/trash.js`) с переносом удаляемых файлов в изолированную сессионную корзину `<workspace>/.dsh/trash/<session_id>/` вместо деструктивного `rm` (Refs: #104).
+- Feature: Реестр сессионных артефактов (`ArtifactRegistry` в `lib/artifacts.js`) для автоматического отслеживания и безопасного разрешения очистки временных файлов текущей сессии на стадии P1 без спама подтверждениями (Refs: #100).
+- Security: Парсер проектных правил безопасности из `AGENTS.md` (`lib/agents-parser.js`) с жестким перехватом запрещенных команд и путей на стадии P0 (`agents-md-prohibited-command`, `agents-md-prohibited-path` -> `deny`) (Refs: #91).
+- Resilience: Проверка совместимости версий хоста DSH (`assertHarnessCompatibility` в `lib/compat.js`) и безопасные полифилы `provideServicePolyfill` / `registerHookPolyfill` для бесшовной работы на различных версиях Cordis (Refs: #106).
+- Security: Страж зависимостей проекта (`VersionGuard` в `lib/version-guard.js`) с автоматическим обнаружением мажорных обновлений в `package.json` и переводом их на ручное подтверждение человеком (`major-version-bump` -> `ask`) (Refs: #95).
+
 ## 0.1.19
 
 - Security: Структурированная категоризация рисков операций по 5 стандартизированным бакетам (`READ_ONLY`, `WORKSPACE`, `EGRESS`, `SYSTEM`, `SECRETS`) в `lib/risk.js` с приоритетной оценкой чувствительности путей, команд и сетевых направлений (Refs: #58).
