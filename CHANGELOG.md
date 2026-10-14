@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.28
+
+- Fix: Безопасное чтение версии хоста в lib/compat.js через ctx.get(version) и защищенный доступ без падений на строгих Proxy-контекстах Cordis при отсутствии инжекции version (Refs: #184).
+
 ## 0.1.27
 
 - Feature: Интерактивный визуальный редактор правил и белых списков путей (ApprovalGateSettingsCard в lib/client.js, TimelineService endpoints /rules в lib/timeline-service.js, слот settings.plugin.item) (Refs: #49).
