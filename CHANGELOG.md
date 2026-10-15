@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.29
+
+- Fix: Безопасная инжекция сервиса `webServer` через `ctx.inject(["webServer"], ...)` при регистрации REST-маршрутов с защитой от прямого чтения на строгих Cordis Context Proxy в DSH alpha2 (Refs: #186).
+- Security: Авторизация и аутентификация всех 8 REST-эндпоинтов в `lib/timeline-service.js` через `isTrustedRequest`, валидацию rejection сервиса `connection`, проверку loopback-хоста и `Sec-Fetch-Site` (Refs: #183).
+- Feature: Динамическая синхронизация volatile-настроек через подписку на события `loader/volatile-update` и `config` в `lib/index.js` без необходимости перезапуска хоста DSH (Refs: #183).
+- Security: Строгая изоляция путей снапшотов внутри `workspaceDir` через `resolveSafePath` в `SnapshotManager.resolvePath` (`lib/snapshots.js`) с отклонением попыток path traversal и внешних путей (Refs: #183).
+
 ## 0.1.28
 
 - Fix: Безопасное чтение версии хоста в lib/compat.js через ctx.get(version) и защищенный доступ без падений на строгих Proxy-контекстах Cordis при отсутствии инжекции version (Refs: #184).
