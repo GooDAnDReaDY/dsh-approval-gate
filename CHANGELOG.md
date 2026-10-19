@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.30
+
+- Fix: Защита от потери данных при rollback нечитаемых существующих файлов (takeSnapshot в lib/snapshots.js проверяет наличие через fs.lstatSync, отличает ENOENT/ENOTDIR от ошибок прав/чтения EACCES/EISDIR, возвращает fail-safe ошибку snapshot-read-failed без создания ложного снапшота; rollbackSnapshot удаляет файл только при явном флаге newlyCreated: true) (Fixes: #188).
+- Security: Автоматическое определение и строгая изоляция рабочей директории по умолчанию (getDefaultWorkspaceDir в lib/paths.js проверяет DSH_WORKSPACE, WORKSPACE_DIR и process.cwd(); SnapshotManager и inspectExecution в lib/inspect.js по умолчанию изолируют запись файлов и снапшоты в пределах рабочей директории, предотвращая path-traversal и несанкционированную запись во внешние системные пути) (Fixes: #189).
+
 ## 0.1.29
 
 - Fix: Безопасная инжекция сервиса `webServer` через `ctx.inject(["webServer"], ...)` при регистрации REST-маршрутов с защитой от прямого чтения на строгих Cordis Context Proxy в DSH alpha2 (Refs: #186).

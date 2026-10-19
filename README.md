@@ -123,6 +123,7 @@ Optional fields on the Cordis patch entry:
 |---|---|---|---|
 | `toolName` | string | `bash` | Tool whose `command` argument is inspected |
 | `fileWriteTools` | string[] | `write`, `edit`, `Write`, `Edit`, `str_replace`, `apply_patch` | Tools classified by path |
+| `workspaceDir` | string | `""` (auto-detected via `DSH_WORKSPACE`, `WORKSPACE_DIR` or `process.cwd()`) | Workspace directory boundary for path traversal, snapshot confinement, and write isolation |
 
 
 

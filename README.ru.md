@@ -103,6 +103,7 @@ graph LR
 |---|---|---|---|
 | toolName | string | bash | Имя инструмента, аргумент command которого проверяется |
 | fileWriteTools | string[] | write, edit, Write, Edit, str_replace, apply_patch | Инструменты записи, проверяемые по целевому пути |
+| `workspaceDir` | string | `""` (автоматически через `DSH_WORKSPACE`, `WORKSPACE_DIR` или `process.cwd()`) | Граница рабочей директории для изоляции путей, снапшотов и защиты от path traversal |
 
 ### Пример Cordis-конфигурации
 
