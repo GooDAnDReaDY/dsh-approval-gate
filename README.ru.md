@@ -101,9 +101,13 @@ graph LR
 
 | Поле | Тип | По умолчанию | Назначение |
 |---|---|---|---|
-| toolName | string | bash | Имя инструмента, аргумент command которого проверяется |
-| fileWriteTools | string[] | write, edit, Write, Edit, str_replace, apply_patch | Инструменты записи, проверяемые по целевому пути |
+| `toolName` | string | `bash` | Имя инструмента, аргумент command которого проверяется |
+| `toolNames` | string[] | `["pwsh", "powershell", "bash"]` на Windows, `["bash", "sh"]` на POSIX | Список имен инструментов оболочки для инспекции (#192) |
+| `fileWriteTools` | string[] | `write`, `edit`, `Write`, `Edit`, `str_replace`, `apply_patch` | Инструменты записи, проверяемые по целевому пути |
 | `workspaceDir` | string | `""` (автоматически через `DSH_WORKSPACE`, `WORKSPACE_DIR` или `process.cwd()`) | Граница рабочей директории для изоляции путей, снапшотов и защиты от path traversal |
+| `uncertainPolicy` | string (`"deny"` \| `"allow"`) | `"deny"` | Политика для нераспознанных или синтаксически неопределенных команд; при `"allow"` безопасные неклассифицированные команды пропускаются с записью в аудит-лог вместо блокировки в unattended (#192) |
+| `allowConfigEdits` | boolean | `false` | Разрешает редактирование конфигурационных файлов `cordis.patch.yml` и `settings.yaml` (при этом учетные данные и SSH-ключи остаются строго защищены) (#192) |
+| `protectedPaths` | string[] | `[]` | Пользовательские шаблоны защищенных путей, блокируемых от записи (#192) |
 
 ### Пример Cordis-конфигурации
 

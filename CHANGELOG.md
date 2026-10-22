@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.31
+
+- Security: Глубокая инспекция и устранение обхода hard-deny через find -exec, find -execdir и xargs: удален "find *" из DEFAULT_ALLOW_GLOBS, добавлен regex-фильтр опасных флагов (-exec, -execdir, -ok, -delete, -fprintf, -fls) в BandsEngine.isSafeInspectionCommand, реализована рекурсивная инспекция вложенных команд в find и xargs с блокировкой деструктивных операций (rm -rf, chmod, kill, dd), а также проверка предикатов записи файлов (-fprintf, -fls) против защищенных путей и границы workspaceDir (Fixes: #191).
+- Feature: Поддержка Windows pwsh/powershell и настраиваемая политика неопределенности: добавлен специализированный парсер lib/parsers/pwsh.js с блокировкой деструктивных командлетов (Remove-Item -Recurse, Stop-Service, Restart-Service, Format-Volume, Clear-Disk, Set-ExecutionPolicy Bypass, Invoke-Expression), поддержка массива toolNames в Config, параметр uncertainPolicy ("deny" | "allow") для пропуска нераспознанных некритичных команд в unattended-режиме с аудитом, а также опция allowConfigEdits и настраиваемые protectedPaths для безопасного редактирования настроек desktop-профиля (Fixes: #192).
+
 ## 0.1.30
 
 - Fix: Защита от потери данных при rollback нечитаемых существующих файлов (takeSnapshot в lib/snapshots.js проверяет наличие через fs.lstatSync, отличает ENOENT/ENOTDIR от ошибок прав/чтения EACCES/EISDIR, возвращает fail-safe ошибку snapshot-read-failed без создания ложного снапшота; rollbackSnapshot удаляет файл только при явном флаге newlyCreated: true) (Fixes: #188).

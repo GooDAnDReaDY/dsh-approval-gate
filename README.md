@@ -122,8 +122,12 @@ Optional fields on the Cordis patch entry:
 | Field | Type | Default | Meaning |
 |---|---|---|---|
 | `toolName` | string | `bash` | Tool whose `command` argument is inspected |
+| `toolNames` | string[] | `["pwsh", "powershell", "bash"]` on Windows, `["bash", "sh"]` on POSIX | Shell tool names inspected by the gate (#192) |
 | `fileWriteTools` | string[] | `write`, `edit`, `Write`, `Edit`, `str_replace`, `apply_patch` | Tools classified by path |
 | `workspaceDir` | string | `""` (auto-detected via `DSH_WORKSPACE`, `WORKSPACE_DIR` or `process.cwd()`) | Workspace directory boundary for path traversal, snapshot confinement, and write isolation |
+| `uncertainPolicy` | string (`"deny"` \| `"allow"`) | `"deny"` | Policy for unparseable or uncertain commands; when set to `"allow"`, safe unclassified commands pass with audit log instead of blocking in unattended mode (#192) |
+| `allowConfigEdits` | boolean | `false` | When enabled, allows modifying `cordis.patch.yml` and `settings.yaml` (while keeping credentials and SSH keys strictly protected) (#192) |
+| `protectedPaths` | string[] | `[]` | Custom path patterns that are protected from write operations (#192) |
 
 
 
