@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<h3>Last-line command gate for DeepSeek Harness</h3>
+<h3>Multi-tier command, file, and approval gate + WebUI audit panel for DeepSeek Harness</h3>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@goodandready/dsh-approval-gate"><img src="https://img.shields.io/npm/v/@goodandready/dsh-approval-gate.svg?style=for-the-badge&color=6366f1&labelColor=1e1b4b" alt="npm version"></a>
@@ -37,136 +37,119 @@
 
 ## Overview
 
-DeepSeek Harness can still let an agent run a dangerous tool call when sandbox mode is loose. This host-only plugin registers a monotonic `tools.guard` and denies the call before the tool body runs.
+DeepSeek Harness can still let an agent run a risky tool call when sandbox permissions are broad. `@goodandready/dsh-approval-gate` pairs a **host-side security engine** (`tools.guard` + `tools/pre-execute`) with a **native WebUI panel and settings card**:
 
-Commands the guard cannot fully inspect are routed through DSH’s native approval flow. This plugin does not implement a separate approval word.
+- Evaluates POSIX Bash (`bash`, `sh`), Windows PowerShell (`pwsh`, `powershell`), and file-write calls through a 5-stage decision cascade (**P0 Hard-Deny → P1 Whitelist / Grants / Learned → P2 Static & Band Inspection → P3 Optional Classifier → P4 Ask**).
+- Isolates writes and snapshots within `workspaceDir`, protects credential files (`.env`, SSH keys, system configs), redacts leaked secrets in telemetry, and supports dry-run / shadow testing.
+- Adds an interactive WebUI audit timeline (`conversation.view`), live rule/whitelist & learned-rule manager (`plugins.item`, `plugins.row.config`), and toggleable session header mode badge (`conversation.session.header.utilities`).
+- Commands that require human confirmation are routed through DSH’s native approval flow (no custom approval keyword).
 
 ## How it works
 
 ```mermaid
-graph LR
-  A[bash / file-write tool] --> B[dsh-approval-gate]
-  B -->|known safe| C[tool runs]
-  B -->|known dangerous| D[denial string]
-  B -->|uncertain syntax or target| E[DSH approval request]
+flowchart LR
+  Call["Agent Tool Call (bash / pwsh / write / edit)"] --> Guard["tools.guard + tools/pre-execute"]
+  Guard --> Engine["SecurityEngine (P0 -> P4)"]
+  Engine -->|"P0 Hard-Deny / Circuit Breaker"| Deny["Block before execution + Audit"]
+  Engine -->|"P1 Whitelist / Grant / Learned / Safe Band"| Allow["Allow tool call + Audit"]
+  Engine -->|"P2–P4 Uncertain / Critical"| Ask["DSH Native Approval (lockedAsk / ask)"]
+  Engine --> UI["TimelineService -> DSH WebUI & Diff Modal"]
 ```
 
-`lib/inspect.js` tokenizes the bash `command` (quotes, backslashes, pipelines, wrappers) and inspects the real argv. File-write tools are classified by path, not by regex over prose.
+## WebUI & User Surfaces
+
+- **Session Audit Timeline (`conversation.view`)**: Right-panel **Approvals** tab displaying filterable security events (`All`, `Blocked`, `Asked`, `Allowed`), turn summary status cards, auto-decision countdown badges, unified diff modal previews with collapsible context lines, and live error notifications.
+- **Plugin Settings Card (`plugins.item`, `plugins.row.config`)**: Collapsible native card supporting:
+  - **`showToolbarBadge`** toggle synced via DSH `configForms`.
+  - **Path Whitelist Editor** (`GET/POST /dsh-approval-gate/rules`) — adds/removes safe path prefixes enforced at stage `P1` while preserving stage `P0` hard-denies (e.g., `.env`, `.ssh`, path traversal).
+  - **Learned Auto-Approval Rules Manager** (`GET /dsh-approval-gate/learned-rules`, `POST /dsh-approval-gate/learned-rules/revoke`) — revokes session auto-approvals immediately.
+- **Header Mode Badge (`conversation.session.header.utilities`)**: Compact mode indicator (`Strict` / `Hybrid` / `Auto` / `Manual`), dynamically hidden when `showToolbarBadge` is disabled.
+- **Localization**: Ships runtime UI dictionaries in **English (`en`)** and **Simplified Chinese (`zh`)** using only `--dsw-alias-*` CSS theme tokens for automatic Light/Dark mode support.
 
 ## Architecture and modules
 
-| Module | Responsibility |
-|---|---|
-| lib/index.js | Registers the monotonic tools.guard and pre-execution approval hook; wires SecurityEngine into DSH. |
-| lib/engine.js | Coordinates the 5-tier decision cascade (P0 Hard-Deny, P1 Grants, P2 Static, P3 LLM, P4 Ask). |
-| lib/bands.js | Fast two-band prefilter for critical hard-denials (Band 0) and zero-overhead safe inspections (Band 1). |
-| lib/breaker.js | Session circuit breaker protecting against infinite agent retry loops upon security denials. |
-| lib/grants.js | Temporary scoped session grant store with TTL and usage limits. |
-| lib/canonical.js | Canonical serialization and hashing of tool execution calls. |
-| lib/paths.js | Path normalization, home expansion, and symlink/traversal boundary verification via resolveSafePath. |
-| lib/tokenizer.js | Tokenizes bounded Bash syntax, tracks operators/heredocs, and extracts parameter/command substitutions. |
-| lib/inspect.js | Evaluates safety rules, inspects command argv and expansions, and returns pass, deny, or ask decisions. |
-| lib/inspect-env.js | Inspects and prevents environment exfiltration, procfs reads, and secret dumping. |
-| lib/redact.js | Masks sensitive credentials, authorization headers, and query tokens in audit messages and URLs. |
-| lib/messages.js | Provides English, Simplified Chinese, and Russian rule names, contextual hints, and formatted messages. |
-| cordis.patch.yml | Declares the host-side plugin bundle and optional tool configuration. |
+| Module group | Key files | Responsibility |
+|---|---|---|
+| Host entry & live config | `lib/index.js`, `lib/dispatcher.js`, `lib/best-effort.js` | Registers `tools.guard`, `tools/pre-execute`, config schema, volatile live sync, and logged best-effort boundaries |
+| Decision cascade & enrichers | `lib/engine.js`, `lib/bands.js`, `lib/decision-enrich.js`, `lib/whitelist.js`, `lib/session-modes.js` | 5-tier P0–P4 evaluation, fast safe/deny bands, live whitelist & custom rule sync, decision risk enrichment |
+| Shell & file inspectors | `lib/inspect.js`, `lib/tokenizer.js`, `lib/parsers/pwsh.js`, `lib/inspect-env.js`, `lib/paths.js` | Bounded Bash tokenizer & PowerShell `pwsh` analyzer, recursive `find`/`xargs` checks, env/secret protection, `workspaceDir` confinement |
+| Declarative rules & hot reload | `lib/rules-loader.js`, `lib/yaml-parser.js`, `lib/when-matcher.js`, `lib/hotwords.js`, `lib/rules-hmr.js`, `lib/agents-parser.js` | Cascading YAML rules (`workspace` → `user` → `builtin` → `custom`), `AGENTS.md` directives, live HMR watcher |
+| Guards, learning & recovery | `lib/breaker.js`, `lib/grants.js`, `lib/learning.js`, `lib/retry-exhaustion.js`, `lib/contract-guard.js`, `lib/overengineering.js`, `lib/version-guard.js`, `lib/snapshots.js` | Circuit breaker, TTL session grants, repeated-confirmation learning, task contracts, file snapshots & rollback |
+| Audit, network & WebUI | `lib/audit-log.js`, `lib/redact.js`, `lib/timeline-service.js`, `lib/loopback.js`, `lib/forward-proxy.js`, `lib/network-sandbox.js`, `lib/client.js` | Immutable append-only audit rotation, credential redaction, 8 fail-closed HTTP routes, and DSH WebUI components |
 
-The guard runs before the tool body. A recognized dangerous action is denied even if a prompt could otherwise be shown. Uncertain syntax or targets are sent to DSH approval; DSH policy still decides whether a prompt is available.
+## Security Coverage & Guarantees
 
-## Coverage
+| Call / Scenario | Decision | Notes |
+|---|---|---|
+| `rm -rf`, `sudo rm -r`, `mkfs`, device `dd`, `kill`/`pkill` (including quoted `k''ill`) | Deny | Caught at P0 before execution |
+| `find -exec` / `xargs` running destructive commands or writing outside workspace | Deny | Recursive nested-command & predicate inspection |
+| PowerShell `Remove-Item -Recurse`, `Stop-Service`, `Clear-Disk`, `Set-ExecutionPolicy Bypass`, `IEX` | Deny | Dedicated `pwsh` parser |
+| Writes to `.env`, SSH keys, `credentials.yaml`, `/etc/shadow`, `settings.yaml`, `cordis.patch.yml` | Deny | Protected even inside whitelisted directories unless explicitly permitted for config edits |
+| Writes inside configured `whitelistPaths` within `workspaceDir` | Allow (P1) | Skips interactive confirmation while P0 hard-denies remain active |
+| `systemctl is-active`, `grep`, `echo`, safe read-only inspections | Allow | Safe band / non-destructive args |
+| Uncertain syntax (`$IFS`, unclosed quotes, dynamic redirects) or custom risky calls | Ask (DSH Approval) | Respects `uncertainPolicy` and `unattendedPolicies`; fail-closed by default |
 
-| Call | Result |
-|---|---|
-| `rm -rf /tmp/x`, `rm -Rf /tmp/x`, `sudo rm -r ...` | block |
-| `chmod`/`chown` on `.env` / `id_rsa`, `chmod -R 777 /` | block |
-| `source script.sh`, `. script.sh`, `source <(...)` | request DSH approval |
-| `mysql << EOF DROP TABLE...`, `echo DROP \| mysql` | block |
-| `curl ... \| python3`, `wget ... \| node` | block |
-| writing to `/etc/shadow`, `/etc/sudoers`, `authorized_keys` | block |
-| `kill` / `pkill` / `killall` as the command | block |
-| `k''ill -9 1` (quoted fragments) | block |
-| `systemctl restart\|stop\|disable ...` | block |
-| `systemctl is-active dsh-web` | pass |
-| `service name stop\|restart` | block |
-| `sqlite3 ... DROP/ALTER/...` | block |
-| `echo x > .env`, `tee`/`sed -i` on secret files | block |
-| `write`/`edit` to `.env`, `credentials.yaml`, `settings.yaml`, `cordis.patch.yml` | block |
-| `grep kill-all docs/`, `echo 'do not rm -rf'` | pass |
-| `python3 -c "print('rm -rf')"` | pass |
-| `$IFS`, `$(...)`, backticks, unclosed quotes, heredoc `<<` | request DSH approval |
-| `bash -c "rm -rf /tmp/x"` | block (nested shell) |
-| empty / missing `command` | pass (nothing to run) |
-| non-string `command` | block (unknown format) |
-
-## What it does not guarantee
-
-- It is not a full bash parser. Unknown or incomplete syntax requests approval; if approval is unavailable or approval=never is configured, DSH denies the call.
-- Interpreter `-c`/`-e` is not a second language parser. Nested `bash -c` is inspected.
-- Cron and systemd never pass through `tools.guard`.
-- A script file created earlier and then executed as `bash ./run.sh` is not opened and scanned.
+**Boundaries (What it does not replace):** It is a bounded static/behavioral inspector over DSH tool calls, not an OS container or VM. Scheduled jobs (`cron`, `systemd`) or arbitrary external scripts (`bash ./script.sh`) are outside `tools.guard` unless inspected by OS sandboxing.
 
 ## Install
 
-Install from the public npm registry:
-
 ```sh
-dsh plugin --profile web add @goodandready/dsh-approval-gate@0.1.3
+dsh plugin --profile web add @goodandready/dsh-approval-gate@0.1.32
 ```
 
-Keep the guard enabled in profiles that need command-safety protection.
+Zero external runtime npm dependencies (uses host `@deepseek-ai/cordis` and `@deepseek-ai/schemastery` peer dependencies only).
 
 ## Configuration
 
-Optional fields on the Cordis patch entry:
+All options in `cordis.patch.yml` / DSH Settings (`volatile` fields update live without restart):
 
-| Field | Type | Default | Meaning |
+| Option | Type | Default | Description |
 |---|---|---|---|
-| `toolName` | string | `bash` | Tool whose `command` argument is inspected |
-| `toolNames` | string[] | `["pwsh", "powershell", "bash"]` on Windows, `["bash", "sh"]` on POSIX | Shell tool names inspected by the gate (#192) |
-| `fileWriteTools` | string[] | `write`, `edit`, `Write`, `Edit`, `str_replace`, `apply_patch` | Tools classified by path |
-| `workspaceDir` | string | `""` (auto-detected via `DSH_WORKSPACE`, `WORKSPACE_DIR` or `process.cwd()`) | Workspace directory boundary for path traversal, snapshot confinement, and write isolation |
-| `uncertainPolicy` | string (`"deny"` \| `"allow"`) | `"deny"` | Policy for unparseable or uncertain commands; when set to `"allow"`, safe unclassified commands pass with audit log instead of blocking in unattended mode (#192) |
-| `allowConfigEdits` | boolean | `false` | When enabled, allows modifying `cordis.patch.yml` and `settings.yaml` (while keeping credentials and SSH keys strictly protected) (#192) |
-| `protectedPaths` | string[] | `[]` | Custom path patterns that are protected from write operations (#192) |
-
-
-
-Example Cordis patch configuration:
-
-<pre><code>- insert:
-    - id: dsh-approval-gate
-      name: @goodandready/dsh-approval-gate
-      config:
-        toolName: bash
-        fileWriteTools:
-          - write
-          - edit
-          - Write
-          - Edit
-          - str_replace
-          - apply_patch
-</code></pre>
+| `showToolbarBadge` | `boolean` | `true` | Toggle visibility of the toolbar gate-mode pill |
+| `toolName` | `string` | `"bash"` | Primary shell tool name |
+| `toolNames` | `string[]` | `["pwsh","powershell","bash"]` (win32) / `["bash","sh"]` | Shell tool names inspected by the gate |
+| `fileWriteTools` | `string[]` | `write`, `edit`, `Write`, `Edit`, `str_replace`, `apply_patch` | Tool names inspected for file-path safety |
+| `workspaceDir` | `string` | `""` (auto-detected) | Workspace root boundary for traversal & snapshot isolation |
+| `defaultVerdict` | `"ask" \| "allow"` | `"ask"` | Fallback verdict for unclassified operations |
+| `uncertainPolicy` | `"deny" \| "allow"` | `"deny"` | Handling of unparseable shell syntax |
+| `allowConfigEdits` | `boolean` | `false` | Permit editing `cordis.patch.yml` / `settings.yaml` (credentials remain blocked) |
+| `protectedPaths` | `string[]` | `[]` | Additional protected path patterns |
+| `unattended` | `boolean` | `false` | Force unattended handling when approval UI is absent |
+| `unattendedPolicies` | `string[]` | `["never"]` | DSH approval policies treated as unattended |
+| `dryRun` / `shadowMode` | `boolean` | `false` | Log decisions without blocking execution |
+| `auditLogPath` | `string` | `""` | Path to append-only JSONL audit log |
+| `auditFailClosed` | `boolean` | `false` | Deny execution if writing to the audit log fails |
+| `rulesFile` | `string` | `""` | Custom YAML declarative rules file path (HMR-watched) |
+| `maxSnapshotsPerSession` / `maxSnapshotBytes` | `number` | `50` / `1048576` | Pre-execution file rollback snapshot limits |
+| `maxFilesPerSession` | `number` | `10` | Threshold for overengineering guard |
+| `isolateTempRoots` | `boolean` | `true` | Confine temp-root writes |
+| `agentsRules` / `versionGuard` / `requireJustification` | `boolean` | `true` / `true` / `false` | Enable `AGENTS.md` parser, major version bump guard, escalation justification |
+| `enableRedundantSandboxRecovery` | `boolean` | `true` | Remediate redundant sandbox escalations |
+| `taskContract` | `any` | `undefined` | Optional task scope contract |
+| `classifierEndpoint` / `classifierApiKey` / `classifierModel` | `string` | `""` / `""` / `"gpt-4o-mini"` | Optional P3 semantic classifier settings |
+| `classifierTimeout` / `classifierTimeoutPolicy` / `classifierMaxContext` / `classifierSlaMs` / `maxPayloadBytes` | `number` / `union` | `3000` / `"strict"` / `1000` / `2000` / `65536` | Classifier timeout, context size, SLA, and payload limits |
 
 ## HTTP routes and CLI
 
-The plugin adds no HTTP routes and no standalone CLI. Install and remove it through the DSH plugin CLI. The plugin only guards supported DSH tool calls; it is not an operating-system sandbox.
+All HTTP routes under `/dsh-approval-gate/*` enforce **fail-closed request validation** (`isTrustedRequest`: host connection auth service + loopback `Host`/`Origin`/`Referer` + non-cross-site `Sec-Fetch-Site`), returning `403` to untrusted requests:
+
+| Route | Method | Description |
+|---|---|---|
+| `/dsh-approval-gate/timeline` | `GET` | Query session security events (`?sessionId=&filter=all\|blocked\|asked\|allowed`) |
+| `/dsh-approval-gate/turn-card` | `GET` | Fetch summary card for the latest agent turn |
+| `/dsh-approval-gate/diff` | `GET` | Compute collapsible unified diff hunks |
+| `/dsh-approval-gate/learned-rules` | `GET` | List session auto-approved rules |
+| `/dsh-approval-gate/learned-rules/revoke` | `POST` | Revoke a learned rule by `{ sessionId, key }` |
+| `/dsh-approval-gate/mode` | `GET` | Current security mode and `showToolbarBadge` state |
+| `/dsh-approval-gate/rules` | `GET` | List active custom rules and whitelisted paths |
+| `/dsh-approval-gate/rules` | `POST` | Update `rules` / `whitelistPaths` and sync live to `SecurityEngine` |
+
+**CLI & Verification:**
+```sh
+npm test            # Run full unit & integration test suite
+npm run eval        # Run benchmark security evaluation (dsh-approval-eval)
+```
 
 ## License
 
 MIT © [GooDAnDReaDY](https://github.com/GooDAnDReaDY)
-
-## Changes in v0.1.3
-
-This is the first public npmjs release under the canonical @goodandready/dsh-approval-gate identity.
-
-Changed in v0.1.3: earlier internal instructions described a separate operator confirmation word. The public package routes uncertain commands through DSH native approval and does not define its own word. Earlier builds used internal distribution; new installs use the public npmjs identity.
-
-This release adds bounded shell syntax analysis and routes uncertain cases through DSH approval while preserving denies for recognized destructive operations and protected-file writes.
-
-The shell analyzer now understands command substitutions, backticks, process substitutions, common redirects including 2> and &>, pipelines, and here-documents. It recursively checks nested shell commands and executable expansions. Ordinary safe reads can pass. Shell-expanded authorization headers request approval because curl receives the credential as a process argument. This package does not provide a credential-safe API helper; keep tokenized API calls out of command-line arguments.
-
-The locale service is optional; the security hooks remain active with English fallback messages when it is unavailable.
-
-Recognized destructive commands and writes to protected files remain denied. This includes recursive rm, process signals, service stop/restart operations, destructive SQL, protected-file writes, git reset --hard, forced git clean, mkfs, device-targeted dd, and downloaded content piped to a shell.
-
-Unsupported or incomplete syntax, dynamic command names or redirect targets, and script files whose contents cannot be inspected request approval through DSH. If approval is unavailable or approval=never is configured, DSH rejects the request. The plugin does not read script files or implement a separate approval word. Messages identify the rule and include a redacted excerpt. This is a bounded shell analyzer, not a complete Bash grammar.

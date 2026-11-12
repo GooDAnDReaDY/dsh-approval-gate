@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.32
+
+- Chore: Поставлены на учёт Gitea `AGENTS.md`, `index.md`, `deploy.sh`, `docs/`, `scripts/publish-github.sh` и `package-lock.json` с `packageManager: "npm@10.9.8"`; настроены `.gitattributes` (`export-ignore`) и `package.json#files` так, чтобы служебные файлы не попадали в npm-пакет и GitHub-зеркало (Fixes: #194, #197).
+- Fix: Устранены все пустые блоки `catch` во всех модулях `lib/*.js` с помощью обёртки `bestEffort` (`lib/best-effort.js`), `resolveService` и явного логирования; добавлен регрессионный тест гигиены (Fixes: #195).
+- UI/Theme: Все захардкоженные hex/rgba цвета в `lib/client.js` заменены на CSS-переменные темы DSH (`--dsw-alias-*` + `color-mix`), добавлен тест отсутствия цветовых литералов (Fixes: #196).
+- Feature/UI: В `lib/client.js` задействованы словари `en`/`zh` (`createTranslator`) во всех компонентах, подключена иконка `IconChevronDownOutline14` с SVG fallback, добавлен маркер `data-dsh-plugin="dsh-approval-gate"`, интеграция `ctx.configForms` с переключателем `showToolbarBadge` (и скрытием `GateModeBadge`), кнопка удаления путей whitelist и отображение ошибок REST в UI (Fixes: #198).
+- Fix/Security: Живая связка `POST /dsh-approval-gate/rules` (`whitelistPaths`, `customRules`) с `SecurityEngine` (`P1` whitelist с сохранением `P0` hard-deny, `lib/whitelist.js`), выделен `lib/decision-enrich.js` (все файлы `lib/*.js` <= 600 строк), удалён мёртвый экспорт `SCAN_CHUNK_SIZE` из `lib/audit-log.js` и убран инфраструктурный путь из `test/telemetry-dossier-drift.test.mjs` (Fixes: #199).
+- Fix/Live DSH: Регистрация всех 7 REST-маршрутов `TimelineService` переведена на уникальные `kind: "exact"` пути (`GET`/`POST /rules` объединены в один обработчик с проверкой HTTP-метода и `405 Method Not Allowed`), а слоты `lib/client.js` выровнены с актуальными слотами DSH (`plugins.item`, `plugins.row.config`, `conversation.session.header.utilities`, `conversation.view`) после живой проверки на тестовом сервере (Refs: #198, #199).
+- Docs: Обновлены `README.md`, `README.zh.md`, `README.ru.md`, `AGENTS.md`, `index.md`, `CHANGELOG.md` и `docs/design/DESIGN.md` (включая «Политика маршрутов» и «Что публикуется») в соответствии с текущей двусторонней архитектурой (Fixes: #200).
+
 ## 0.1.31
 
 - Security: Глубокая инспекция и устранение обхода hard-deny через find -exec, find -execdir и xargs: удален "find *" из DEFAULT_ALLOW_GLOBS, добавлен regex-фильтр опасных флагов (-exec, -execdir, -ok, -delete, -fprintf, -fls) в BandsEngine.isSafeInspectionCommand, реализована рекурсивная инспекция вложенных команд в find и xargs с блокировкой деструктивных операций (rm -rf, chmod, kill, dd), а также проверка предикатов записи файлов (-fprintf, -fls) против защищенных путей и границы workspaceDir (Fixes: #191).

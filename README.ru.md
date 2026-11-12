@@ -2,7 +2,7 @@
 
 <div align="center">
 
-<h3>Дополнительная защита командных инструментов DSH</h3>
+<h3>Многоуровневый защитный шлюз команд/файлов и панель аудита WebUI для DeepSeek Harness</h3>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@goodandready/dsh-approval-gate"><img src="https://img.shields.io/npm/v/@goodandready/dsh-approval-gate.svg?style=for-the-badge&color=6366f1&labelColor=1e1b4b" alt="npm version"></a>
@@ -12,17 +12,23 @@
 </p>
 
 <p align="center">
-  <a href="https://goodandready.app/"><img src="https://img.shields.io/badge/Все_проекты-goodandready.app-ff4500.svg?style=for-the-badge&logo=rocket&logoColor=white&labelColor=1a1a2e" alt="GoodAndReady Showcase"></a>
+  <a href="https://goodandready.app/"><img src="https://img.shields.io/badge/All_projects-goodandready.app-ff4500.svg?style=for-the-badge&logo=rocket&logoColor=white&labelColor=1a1a2e" alt="GoodAndReady Showcase"></a>
 </p>
 
 <p align="center">
-  <a href="README.md"><b>🇬🇧 English</b></a> •
-  <a href="README.zh.md"><b>🇨🇳 中文说明</b></a> •
-  <a href="README.ru.md"><b>🇷🇺 Русский</b></a>
+  <a href="README.md"><b>English</b></a> ·
+  <a href="README.zh.md"><b>中文说明</b></a> ·
+  <a href="README.ru.md"><b>Русский</b></a>
 </p>
 
 <table align="center">
-  <tr><td align="center">⭐ <strong>Если вам нравится этот плагин, поставьте ему Star на GitHub</strong> — это покажет, что он полезен, и мотивирует продолжать его развитие.<br><br>🐛 <strong>Если вы нашли ошибку или хотите предложить функцию</strong>, создайте Issue на GitHub на любом языке — полезные предложения будут рассмотрены для следующих версий.</td></tr>
+  <tr>
+    <td align="center">
+      ⭐ <strong>Если вам нравится этот плагин, поставьте звезду на GitHub</strong> — это показывает, что он полезен, и мотивирует продолжать разработку.
+      <br><br>
+      🐛 <strong>Если нашли баг или хотите предложить функцию</strong> — создайте issue на GitHub на любом языке, мы рассмотрим предложение для будущих версий.
+    </td>
+  </tr>
 </table>
 
 </div>
@@ -31,106 +37,106 @@
 
 ## Обзор
 
-Плагин безопасности для хоста DSH: до запуска тела инструмента блокирует опасные вызовы bash и запись в защищённые файлы. Неопределённые команды передаются штатному механизму подтверждения DSH; плагин не вводит отдельное слово подтверждения.
+Даже в песочнице агент может попытаться выполнить опасную shell-команду или изменить секретный файл при широких правах. `@goodandready/dsh-approval-gate` объединяет **серверный движок безопасности** (`tools.guard` + `tools/pre-execute`) и **нативный интерфейс аудита и настроек в DSH WebUI**:
 
-Таблица покрытия, ограничения и конфигурация — в [README.md](README.md).
+- Проверяет POSIX Bash (`bash`, `sh`), Windows PowerShell (`pwsh`, `powershell`) и операции записи файлов по 5-ступенчатому каскаду (**P0 Hard-Deny → P1 Whitelist / Гранты / Выученные правила → P2 Статический анализ и полосы → P3 Опциональный классификатор → P4 Запрос подтверждения**).
+- Ограничивает запись и откат-снапшоты границами `workspaceDir`, защищает файлы секретов (`.env`, SSH-ключи, системные конфиги), маскирует учётные данные в логах и поддерживает режим `dryRun` / `shadowMode`.
+- Добавляет вкладку ленты аудита сессии (`conversation.view`), карточку настроек и правил (`plugins.item`, `plugins.row.config`) и переключаемый индикатор режима в заголовке сессии (`conversation.session.header.utilities`).
+- Неопределённые операции маршрутизируются через штатный механизм подтверждения DSH без собственного кодового слова.
 
-Установка (публичный пакет npm):
-
-```sh
-dsh plugin --profile web add @goodandready/dsh-approval-gate@0.1.5
-```
-
-## Изменения в v0.1.3
-
-Первый публичный выпуск под идентичностью @goodandready/dsh-approval-gate.
-
-Изменено в v0.1.3: прежние внутренние инструкции описывали отдельное слово подтверждения оператора. Публичная версия передаёт неопределённые команды штатному подтверждению DSH и не определяет собственное слово; новые установки используют публичный пакет npmjs.
-
-Выпуск добавляет ограниченный разбор shell-синтаксиса и передаёт неопределённые случаи в запрос подтверждения DSH, сохраняя запреты на распознанные разрушительные команды и запись в защищённые файлы.
-
-Анализатор shell-команд теперь понимает подстановки команд, обратные кавычки, подстановки процессов, основные перенаправления, включая 2> и &>, конвейеры и here-document. Он рекурсивно проверяет вложенные shell-команды и исполняемые раскрытия. Обычные безопасные чтения разрешены. Подстановка секрета в заголовок Authorization требует подтверждения: curl получает его как аргумент процесса. В этом пакете пока нет безопасного помощника для работы с учётными данными; не передавайте токен в аргументах команды.
-
-Сервис локализации необязателен: если его нет, защитные хуки работают с английскими сообщениями.
-
-Известные разрушительные команды и записи в защищённые файлы по-прежнему запрещены. К ним относятся рекурсивный rm, сигналы процессам, остановка и перезапуск служб, разрушительный SQL, запись в защищённые файлы, git reset --hard, принудительный git clean, mkfs, запись dd на устройство и передача загруженного содержимого shell.
-
-Для незакрытого или неподдерживаемого синтаксиса, динамического имени команды или цели перенаправления, а также файла скрипта, содержимое которого невозможно проверить, DSH запрашивает подтверждение. Если подтверждение недоступно или задано approval=never, DSH отклоняет запрос. Плагин не читает файлы скриптов и не вводит отдельное слово подтверждения. Сообщение называет правило и показывает обезличенный фрагмент команды. Это ограниченный анализатор shell, а не полный парсер Bash.
-
-## Архитектура и возможности
-
-| Модуль | Назначение |
-|---|---|
-| lib/index.js | Регистрирует монотонный tools.guard и штатный pre-execution approval hook DSH, подключает проверки shell и файловых записей. |
-| lib/tokenizer.js | Разбирает ограниченный shell-синтаксис, выделяет операторы, heredoc и подстановки команд/параметров. |
-| lib/inspect.js | Применяет правила опасных команд и защищённых записей, проверяет argv и подстановки, возвращает pass, deny или ask. |
-| lib/messages.js | Содержит английские, китайские и русские словари правил, пояснений и форматирования сообщений. |
-| cordis.patch.yml | Объявляет host-пакет плагина и необязательную конфигурацию инструментов. |
+## Как это работает
 
 ```mermaid
-graph LR
-  A[Вызов инструмента агентом] --> B[dsh-approval-gate]
-  B -->|Команда распознана и безопасна| C[Запуск инструмента]
-  B -->|Известное опасное действие| D[Запрет]
-  B -->|Синтаксис или цель неясны| E[Подтверждение DSH]
+flowchart LR
+  Call["Вызов инструмента (bash / pwsh / write / edit)"] --> Guard["tools.guard + tools/pre-execute"]
+  Guard --> Engine["SecurityEngine (P0 -> P4)"]
+  Engine -->|"P0 Hard-Deny / Circuit Breaker"| Deny["Блокировка до выполнения + Аудит"]
+  Engine -->|"P1 Whitelist / Грант / Выучено / Safe Band"| Allow["Пропуск вызова + Аудит"]
+  Engine -->|"P2–P4 Неясный синтаксис / Критично"| Ask["Штатное подтверждение DSH (lockedAsk / ask)"]
+  Engine --> UI["TimelineService -> DSH WebUI и Diff Modal"]
 ```
 
-Распознанные опасные действия запрещаются. Если нельзя проверить синтаксис, имя команды, аргументы, цель перенаправления или записи, плагин передаёт запрос штатному подтверждению DSH. При approval=never DSH отклоняет неопределённый запрос. Безопасные и полностью проверенные команды проходят.
+## Интерфейс WebUI
 
-### Что проверяется
+- **Лента аудита сессии (`conversation.view`)**: вкладка **Approvals** с фильтрами (`All`, `Blocked`, `Asked`, `Allowed`), сводной карточкой хода (`TurnCard`), таймером авто-решения (`CountdownBadge`), модальным просмотром diff с сворачиваемым контекстом (`DiffPanelModal`) и баннером ошибок.
+- **Карточка настроек плагина (`plugins.item`, `plugins.row.config`)**:
+  - Переключатель **`showToolbarBadge`** через `ctx.configForms.get("dsh-approval-gate")`.
+  - **Редактор белых списков путей** (`GET/POST /dsh-approval-gate/rules`) — добавление и удаление безопасных директорий на уровне `P1` с сохранением жёсткой защиты `P0` (`.env`, `.ssh`, path traversal).
+  - **Менеджер выученных авто-одобрений** (`GET /dsh-approval-gate/learned-rules`, `POST /dsh-approval-gate/learned-rules/revoke`) — мгновенный отзыв запомненных разрешений.
+- **Индикатор режима в заголовке сессии (`conversation.session.header.utilities`)**: отображает активный режим (`Strict` / `Hybrid` / `Auto` / `Manual`), скрывается при отключении `showToolbarBadge`.
+- **Локализация и темы**: клиент регистрирует словари `en` и `zh` (русский перевод поддерживается пакетом `dsh-russian-lang`) и использует только переменные темы `--dsw-alias-*` для светлой и тёмной темы.
 
-| Пример вызова | Результат |
-|---|---|
-| rm -rf /tmp/x, rm -Rf /tmp/x, sudo rm -r ... | Запрет |
-| chmod/chown на секретах (.env, id_rsa) или chmod -R на корне | Запрет |
-| source script.sh, . script.sh, source <(...) | Запрос подтверждения DSH |
-| mysql << EOF DROP TABLE..., echo DROP \| mysql | Запрет |
-| curl ... \| python3, wget ... \| node | Запрет |
-| Запись в /etc/shadow, /etc/sudoers, authorized_keys | Запрет |
-| kill, pkill, killall | Запрет |
-| systemctl stop/restart/disable | Запрет; systemctl is-active проходит |
-| service name stop/restart | Запрет |
-| Разрушительные DROP/ALTER и подобный SQL | Запрет |
-| Запись в .env, credentials.yaml, settings.yaml или cordis.patch.yml | Запрет |
-| Чтение защищённой настройки и упоминание опасной команды в обычном тексте | Разрешено |
-| Незакрытый heredoc, динамическое имя команды или непроверяемый файл скрипта | Запрос подтверждения DSH |
+## Архитектура и модули
 
-### Настройка
+| Группа модулей | Основные файлы | Ответственность |
+|---|---|---|
+| Вход и конфигурация | `lib/index.js`, `lib/dispatcher.js`, `lib/best-effort.js` | Регистрация `tools.guard` и `tools/pre-execute`, схема конфигурации, live-синхронизация `volatile`, логирование `bestEffort` |
+| Каскад решений | `lib/engine.js`, `lib/bands.js`, `lib/decision-enrich.js`, `lib/whitelist.js`, `lib/session-modes.js` | Каскад `P0`–`P4`, быстрые полосы `Band 0`/`Band 1`, live-применение whitelist и custom rules, обогащение решений |
+| Парсеры shell и путей | `lib/inspect.js`, `lib/tokenizer.js`, `lib/parsers/pwsh.js`, `lib/inspect-env.js`, `lib/paths.js` | Токенизация Bash и PowerShell `pwsh`, рекурсивная проверка `find`/`xargs`, защита env/секретов и изоляция `workspaceDir` |
+| Декларативные правила и HMR | `lib/rules-loader.js`, `lib/yaml-parser.js`, `lib/when-matcher.js`, `lib/hotwords.js`, `lib/rules-hmr.js`, `lib/agents-parser.js` | Каскадные YAML-правила (`workspace` → `user` → `builtin` → `custom`), правила `AGENTS.md` и горячая перезагрузка |
+| Предохранители и откат | `lib/breaker.js`, `lib/grants.js`, `lib/learning.js`, `lib/retry-exhaustion.js`, `lib/contract-guard.js`, `lib/overengineering.js`, `lib/version-guard.js`, `lib/snapshots.js` | Circuit breaker, TTL-гранты, самообучение по подтверждениям, контракты задач, снапшоты до записи |
+| Аудит, сеть и WebUI | `lib/audit-log.js`, `lib/redact.js`, `lib/timeline-service.js`, `lib/loopback.js`, `lib/forward-proxy.js`, `lib/network-sandbox.js`, `lib/client.js` | Неизменяемая ротация логов аудита, маскирование секретов, 8 fail-closed HTTP-маршрутов и UI-компоненты |
 
-В элементе плагина в Cordis patch можно задать поля:
+## Покрытие и ограничения
 
-| Поле | Тип | По умолчанию | Назначение |
+| Операция / сценарий | Решение | Примечание |
+|---|---|---|
+| `rm -rf`, `sudo rm -r`, `mkfs`, `dd` на устройства, `kill`/`pkill` (включая `k''ill`) | Блокировка (Deny) | Перехватывается на этапе P0 до запуска |
+| `find -exec` / `xargs` с разрушительными командами или записью вне workspace | Блокировка (Deny) | Рекурсивный разбор вложенных команд и предикатов |
+| PowerShell `Remove-Item -Recurse`, `Stop-Service`, `Clear-Disk`, `IEX` | Блокировка (Deny) | Отдельный парсер `pwsh` |
+| Запись в `.env`, SSH-ключи, `credentials.yaml`, `/etc/shadow`, `settings.yaml`, `cordis.patch.yml` | Блокировка (Deny) | Защищено даже внутри белых списков путей |
+| Запись в разрешённый подкаталог `whitelistPaths` внутри `workspaceDir` | Разрешение (P1) | Пропускает запрос подтверждения, не ослабляя P0 |
+| `systemctl is-active`, `grep`, `echo`, безопасное чтение | Разрешение | Safe band / безопасные аргументы |
+| Нераспознанный синтаксис (`$IFS`, незакрытые кавычки, редиректы) | Запрос подтверждения DSH | Учитывает `uncertainPolicy` и `unattendedPolicies` |
+
+**Границы применимости:** плагин контролирует поддерживаемые вызовы инструментов DSH и не заменяет изоляцию контейнера или ОС; фоновые процессы `cron`/`systemd` и внутренний код уже созданных скриптов `bash ./run.sh` не проходят через `tools.guard`.
+
+## Установка
+
+```sh
+dsh plugin --profile web add @goodandready/dsh-approval-gate@0.1.32
+```
+
+Нулевые внешние runtime-зависимости (только peer-зависимости хоста `@deepseek-ai/cordis` и `@deepseek-ai/schemastery`).
+
+## Конфигурация
+
+Настройки в `cordis.patch.yml` / интерфейсе DSH (поля `volatile` применяются без перезапуска):
+
+| Параметр | Тип | По умолчанию | Назначение |
 |---|---|---|---|
-| `toolName` | string | `bash` | Имя инструмента, аргумент command которого проверяется |
-| `toolNames` | string[] | `["pwsh", "powershell", "bash"]` на Windows, `["bash", "sh"]` на POSIX | Список имен инструментов оболочки для инспекции (#192) |
-| `fileWriteTools` | string[] | `write`, `edit`, `Write`, `Edit`, `str_replace`, `apply_patch` | Инструменты записи, проверяемые по целевому пути |
-| `workspaceDir` | string | `""` (автоматически через `DSH_WORKSPACE`, `WORKSPACE_DIR` или `process.cwd()`) | Граница рабочей директории для изоляции путей, снапшотов и защиты от path traversal |
-| `uncertainPolicy` | string (`"deny"` \| `"allow"`) | `"deny"` | Политика для нераспознанных или синтаксически неопределенных команд; при `"allow"` безопасные неклассифицированные команды пропускаются с записью в аудит-лог вместо блокировки в unattended (#192) |
-| `allowConfigEdits` | boolean | `false` | Разрешает редактирование конфигурационных файлов `cordis.patch.yml` и `settings.yaml` (при этом учетные данные и SSH-ключи остаются строго защищены) (#192) |
-| `protectedPaths` | string[] | `[]` | Пользовательские шаблоны защищенных путей, блокируемых от записи (#192) |
+| `showToolbarBadge` | `boolean` | `true` | Показывать индикатор режима в верхней панели |
+| `toolName` / `toolNames` | `string` / `string[]` | `"bash"` / по ОС | Имена shell-инструментов для инспекции |
+| `fileWriteTools` | `string[]` | `write`, `edit`, `Write`, `Edit`, `str_replace`, `apply_patch` | Инструменты записи файлов, проверяемые по пути |
+| `workspaceDir` | `string` | `""` (автоопределение) | Корневая граница рабочего каталога для изоляции записи и снапшотов |
+| `defaultVerdict` / `uncertainPolicy` | `"ask"\|"allow"` / `"deny"\|"allow"` | `"ask"` / `"deny"` | Вердикт по умолчанию для неклассифицированных и нераспознанных команд |
+| `allowConfigEdits` / `protectedPaths` | `boolean` / `string[]` | `false` / `[]` | Разрешение правки конфигов DSH и пользовательский список защищённых путей |
+| `unattended` / `unattendedPolicies` | `boolean` / `string[]` | `false` / `["never"]` | Правила работы в автономном режиме без UI подтверждений |
+| `dryRun` / `shadowMode` | `boolean` | `false` | Режим наблюдения и аудита без фактической блокировки |
+| `auditLogPath` / `auditFailClosed` | `string` / `boolean` | `""` / `false` | Путь к журналу аудита JSONL и блокировка при сбое записи в аудит |
+| `rulesFile` | `string` | `""` | Пользовательский YAML-файл правил с поддержкой HMR |
+| `maxSnapshotsPerSession` / `maxSnapshotBytes` | `number` | `50` / `1048576` | Ограничения на откат-снапшоты до выполнения |
+| `maxFilesPerSession` / `isolateTempRoots` / `agentsRules` / `versionGuard` / `requireJustification` / `enableRedundantSandboxRecovery` | `number` / `boolean` | `10` / `true` / `true` / `true` / `false` / `true` | Защита от избыточных правок, изоляция temp-путей, правила `AGENTS.md`, контроль major-версий |
+| Параметры классификатора P3 (`classifier*`, `maxPayloadBytes`, `taskContract`) | разный | см. `lib/index.js` | Настройки опционального семантического классификатора и контракта задачи |
 
-### Пример Cordis-конфигурации
+## HTTP-маршруты и CLI
 
-<pre><code>- insert:
-    - id: dsh-approval-gate
-      name: @goodandready/dsh-approval-gate
-      config:
-        toolName: bash
-        fileWriteTools:
-          - write
-          - edit
-          - Write
-          - Edit
-          - str_replace
-          - apply_patch
-</code></pre>
+Все 8 маршрутов под `/dsh-approval-gate/*` используют **fail-closed авторизацию** `isTrustedRequest` (проверка `connection`, loopback `Host`/`Origin`/`Referer`, защита от cross-site `Sec-Fetch-Site`), возвращая `403` недоверенным клиентам:
 
-### Установка и ограничения
+- `GET /dsh-approval-gate/timeline` — лента событий сессии (`?sessionId=&filter=all|blocked|asked|allowed`)
+- `GET /dsh-approval-gate/turn-card` — сводка безопасности последнего хода
+- `GET /dsh-approval-gate/diff` — построение унифицированного diff с фолдами
+- `GET /dsh-approval-gate/learned-rules` — список выученных авто-одобрений
+- `POST /dsh-approval-gate/learned-rules/revoke` — отзыв выученного правила по ключу
+- `GET /dsh-approval-gate/mode` — текущий режим гейта и флаг `showToolbarBadge`
+- `GET /dsh-approval-gate/rules` — активные пользовательские правила и `whitelistPaths`
+- `POST /dsh-approval-gate/rules` — обновление правил и `whitelistPaths` с live-синхронизацией в `SecurityEngine`
 
-<pre><code>dsh plugin --profile web add @goodandready/dsh-approval-gate@0.1.5</code></pre>
-
-Плагин не добавляет HTTP-маршруты или отдельную CLI-команду и не читает содержимое файлов скриптов. Это не системная песочница: команды cron и systemd, запущенные отдельно от инструментов DSH, он не перехватывает.
-
+**CLI и проверка:**
+```sh
+npm test            # Полный набор unit- и интеграционных тестов
+npm run eval        # Бенчмарк безопасности (dsh-approval-eval)
+```
 
 ## Лицензия
 
